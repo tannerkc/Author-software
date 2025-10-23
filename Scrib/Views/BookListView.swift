@@ -50,6 +50,7 @@ struct BookListView: View {
             ForEach(filteredBooks) { book in
                 BookRowView(book: book)
                     .tag(book)
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             deleteBook(book)
@@ -84,26 +85,32 @@ struct BookListView: View {
             }
         }
         .navigationTitle("Books")
-        .searchable(text: $searchText, prompt: "Search books")
+        .searchable(text: $searchText, prompt: "Search Books")
         .toolbar {
+            #if os(iOS)
+            // Top toolbar: New Book button first, then Edit button
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingNewBookSheet = true
+                } label: {
+                    Label("New Book", systemImage: "square.and.pencil")
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    // Edit mode will be handled by NavigationStack
+                }
+            }
+
+            // Bottom toolbar: Search bar
+            DefaultToolbarItem(kind: .search, placement: .bottomBar)
+            #else
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingNewBookSheet = true
                 } label: {
                     Label("New Book", systemImage: "plus")
-                }
-            }
-
-            #if os(macOS)
-            ToolbarItem(placement: .secondaryAction) {
-                Menu {
-                    Button {
-                        showingNewBookSheet = true
-                    } label: {
-                        Label("New Book", systemImage: "book")
-                    }
-                } label: {
-                    Label("Options", systemImage: "ellipsis.circle")
                 }
             }
             #endif

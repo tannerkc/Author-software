@@ -1,0 +1,108 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-gray:1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill-specializations" : [
+            {
+              "value" : {
+                "automatic-gradient" : "extended-gray:0.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "automatic-gradient" : "extended-gray:1.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "automatic-gradient" : "extended-gray:0.75000,1.00000"
+              }
+            }
+          ],
+          "glass" : false,
+          "image-name" : "IJ7yETPMYNTy-removebg-preview.png",
+          "name" : "IJ7yETPMYNTy-removebg-preview",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -155.3515625,
+              176.8046875
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "IJ7yETPMYNTy.jpg",
+          "name" : "IJ7yETPMYNTy",
+          "position" : {
+            "scale" : 0.5,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "icons8-story-book-48.png",
+          "name" : "icons8-story-book-48",
+          "position" : {
+            "scale" : 8,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "icons8-story-book-96.png",
+          "name" : "icons8-story-book-96",
+          "position" : {
+            "scale" : 5.5,
+            "translation-in-points" : [
+              -150.5859375,
+              172.7734375
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "icons8-story-book-96-2.png",
+          "name" : "icons8-story-book-96-2",
+          "position" : {
+            "scale" : 5,
+            "translation-in-points" : [
+              -171.7421875,
+              190
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

@@ -21,6 +21,12 @@
 		A012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B012 /* SettingsView.swift */; };
 		A013 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B013 /* Date+Extensions.swift */; };
 		A014 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B014 /* Color+Extensions.swift */; };
+		A015 /* ChapterMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = B015 /* ChapterMetadata.swift */; };
+		A016 /* AdaptiveKeyboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B016 /* AdaptiveKeyboardToolbar.swift */; };
+		A017 /* CharacterMarkerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B017 /* CharacterMarkerSheet.swift */; };
+		A018 /* InlineNoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B018 /* InlineNoteSheet.swift */; };
+		A019 /* ChapterMetadataSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B019 /* ChapterMetadataSheet.swift */; };
+		A020 /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B020 /* FormatToolbar.swift */; };
 		A101 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B101 /* BookModelTests.swift */; };
 		A102 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B102 /* ChapterModelTests.swift */; };
 /* End PBXBuildFile section */
@@ -28,7 +34,7 @@
 /* Begin PBXContainerItemProxy section */
 		C001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = P001 /* Project object */;
+			containerPortal = P001 /* Scrib.app */;
 			proxyType = 1;
 			remoteGlobalIDString = T001;
 			remoteInfo = Scrib;
@@ -36,6 +42,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6C17D2602EAAA48600EA2C6B /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		B001 /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
 		B002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -50,6 +57,12 @@
 		B012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B013 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		B014 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
+		B015 /* ChapterMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMetadata.swift; sourceTree = "<group>"; };
+		B016 /* AdaptiveKeyboardToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveKeyboardToolbar.swift; sourceTree = "<group>"; };
+		B017 /* CharacterMarkerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterMarkerSheet.swift; sourceTree = "<group>"; };
+		B018 /* InlineNoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineNoteSheet.swift; sourceTree = "<group>"; };
+		B019 /* ChapterMetadataSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMetadataSheet.swift; sourceTree = "<group>"; };
+		B020 /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
 		B101 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
 		B102 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
 		P001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,6 +93,7 @@
 				G002 /* Scrib */,
 				G100 /* ScribTests */,
 				G999 /* Products */,
+				6C17D2602EAAA48600EA2C6B /* AppIcon.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +123,7 @@
 			children = (
 				B004 /* Book.swift */,
 				B005 /* Chapter.swift */,
+				B015 /* ChapterMetadata.swift */,
 				B006 /* DataStore.swift */,
 			);
 			path = Models;
@@ -122,6 +137,7 @@
 				B010 /* ChapterListView.swift */,
 				B011 /* ChapterEditorView.swift */,
 				B012 /* SettingsView.swift */,
+				G020 /* Components */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -150,6 +166,18 @@
 				B003 /* Assets.xcassets */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		G020 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				B016 /* AdaptiveKeyboardToolbar.swift */,
+				B017 /* CharacterMarkerSheet.swift */,
+				B018 /* InlineNoteSheet.swift */,
+				B019 /* ChapterMetadataSheet.swift */,
+				B020 /* FormatToolbar.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		G100 /* ScribTests */ = {
@@ -266,12 +294,18 @@
 				A004 /* Book.swift in Sources */,
 				A005 /* Chapter.swift in Sources */,
 				A006 /* DataStore.swift in Sources */,
+				A015 /* ChapterMetadata.swift in Sources */,
 				A007 /* BookViewModel.swift in Sources */,
 				A008 /* ChapterViewModel.swift in Sources */,
 				A009 /* BookListView.swift in Sources */,
 				A010 /* ChapterListView.swift in Sources */,
 				A011 /* ChapterEditorView.swift in Sources */,
 				A012 /* SettingsView.swift in Sources */,
+				A016 /* AdaptiveKeyboardToolbar.swift in Sources */,
+				A017 /* CharacterMarkerSheet.swift in Sources */,
+				A018 /* InlineNoteSheet.swift in Sources */,
+				A019 /* ChapterMetadataSheet.swift in Sources */,
+				A020 /* FormatToolbar.swift in Sources */,
 				A013 /* Date+Extensions.swift in Sources */,
 				A014 /* Color+Extensions.swift in Sources */,
 			);
@@ -291,7 +325,6 @@
 /* Begin PBXTargetDependency section */
 		D001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = T001 /* Scrib */;
 			targetProxy = C001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -420,7 +453,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = BRC59YVWTB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -429,14 +462,14 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.scrib.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -457,7 +490,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = BRC59YVWTB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -466,14 +499,14 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.scrib.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";

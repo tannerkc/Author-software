@@ -1,0 +1,264 @@
+//
+//  AdaptiveKeyboardToolbar.swift
+//  Scrib
+//
+//  Created by Claude Code
+//  Copyright © 2025 Scrib. All rights reserved.
+//
+
+import SwiftUI
+
+/// iOS 26 adaptive keyboard toolbar with Liquid Glass design
+///
+/// Replicates Apple Notes' adaptive toolbar that sits above the keyboard,
+/// featuring horizontal scrolling for 18+ tools and context-aware visibility.
+/// Includes both standard formatting tools and Scrib-specific authoring features.
+struct AdaptiveKeyboardToolbar: View {
+    /// Current text selection/cursor state
+    @Binding var selectedRange: Range<String.Index>?
+
+    /// Content being edited
+    @Binding var content: String
+
+    /// Word count to display
+    let wordCount: Int
+
+    /// Callback for formatting actions
+    var onFormatAction: (FormatAction) -> Void
+
+    /// Available formatting and tool actions
+    enum FormatAction {
+        // Format menu
+        case showFormatMenu
+
+        // Text formatting
+        case bold, italic, underline, strikethrough
+        case highlight(Color)
+
+        // Lists and structure
+        case bulletList, numberedList, checklist
+        case indent, outdent
+
+        // Content insertion
+        case quote, link, table, image
+
+        // Scrib-specific
+        case markCharacter
+        case addNote
+        case setMetadata
+        case markScene
+        case markPOV
+
+        // Apple Intelligence
+        case aiRewrite, aiProofread, aiSummarize
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // MARK: - Scrollable Tool Buttons
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    // Core tools (always visible)
+                    ForEach(coreTools, id: \.self) { tool in
+                        toolButton(for: tool)
+                    }
+
+                    Divider()
+                        .frame(height: 24)
+                        .padding(.horizontal, 4)
+
+                    // Extended tools (swipeable)
+                    ForEach(extendedTools, id: \.self) { tool in
+                        toolButton(for: tool)
+                    }
+
+                    Divider()
+                        .frame(height: 24)
+                        .padding(.horizontal, 4)
+
+                    // Scrib-specific tools
+                    ForEach(scribTools, id: \.self) { tool in
+                        toolButton(for: tool)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+            }
+
+            Divider()
+                .frame(height: 28)
+                .padding(.horizontal, 8)
+
+            // MARK: - Word Count
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(wordCount)")
+                    .font(.caption.monospacedDigit())
+                    .fontWeight(.medium)
+
+                Text("words")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.trailing, 16)
+            .frame(minWidth: 60)
+        }
+        .frame(height: 48)
+        .padding(.horizontal, 20)
+        .glassEffect(.regular.interactive(), in: .capsule)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Tool Button
+
+    @ViewBuilder
+    private func toolButton(for tool: ToolDescriptor) -> some View {
+        Button {
+            onFormatAction(tool.action)
+        } label: {
+            Image(systemName: tool.icon)
+                .font(.system(size: 18))
+                .foregroundStyle(tool.tint)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .help(tool.label)
+    }
+
+    // MARK: - Tool Definitions
+
+    /// Core tools (first 6-8, most frequently used)
+    private var coreTools: [ToolDescriptor] {
+        [
+            ToolDescriptor(icon: "textformat", label: "Format", action: .showFormatMenu, tint: .primary),
+            ToolDescriptor(icon: "bold", label: "Bold", action: .bold),
+            ToolDescriptor(icon: "italic", label: "Italic", action: .italic),
+            ToolDescriptor(icon: "underline", label: "Underline", action: .underline),
+            ToolDescriptor(icon: "highlighter", label: "Highlight", action: .highlight(.yellow)),
+            ToolDescriptor(icon: "list.bullet", label: "Bullet List", action: .bulletList),
+            ToolDescriptor(icon: "list.number", label: "Numbered List", action: .numberedList),
+        ]
+    }
+
+    /// Extended tools (swipeable, standard features)
+    private var extendedTools: [ToolDescriptor] {
+        [
+            ToolDescriptor(icon: "strikethrough", label: "Strikethrough", action: .strikethrough),
+            ToolDescriptor(icon: "checklist", label: "Checklist", action: .checklist),
+            ToolDescriptor(icon: "increase.indent", label: "Indent", action: .indent),
+            ToolDescriptor(icon: "decrease.indent", label: "Outdent", action: .outdent),
+            ToolDescriptor(icon: "text.quote", label: "Quote", action: .quote),
+            ToolDescriptor(icon: "link", label: "Insert Link", action: .link),
+            ToolDescriptor(icon: "photo", label: "Insert Image", action: .image),
+            ToolDescriptor(icon: "tablecells", label: "Insert Table", action: .table),
+        ]
+    }
+
+    /// Scrib-specific authoring tools
+    private var scribTools: [ToolDescriptor] {
+        [
+            ToolDescriptor(
+                icon: "person.fill.badge.plus",
+                label: "Mark Character",
+                action: .markCharacter,
+                tint: .purple
+            ),
+            ToolDescriptor(
+                icon: "note.text.badge.plus",
+                label: "Add Note",
+                action: .addNote,
+                tint: .orange
+            ),
+            ToolDescriptor(
+                icon: "mappin.circle",
+                label: "Mark Scene",
+                action: .markScene,
+                tint: .green
+            ),
+            ToolDescriptor(
+                icon: "eye.fill",
+                label: "Mark POV",
+                action: .markPOV,
+                tint: .blue
+            ),
+            ToolDescriptor(
+                icon: "tag.fill",
+                label: "Set Metadata",
+                action: .setMetadata,
+                tint: .indigo
+            ),
+            ToolDescriptor(
+                icon: "wand.and.stars",
+                label: "AI Rewrite",
+                action: .aiRewrite,
+                tint: .pink
+            ),
+        ]
+    }
+}
+
+// MARK: - Tool Descriptor
+
+/// Describes a toolbar button
+struct ToolDescriptor: Hashable {
+    let icon: String
+    let label: String
+    let action: AdaptiveKeyboardToolbar.FormatAction
+    var tint: Color = .primary
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(icon)
+        hasher.combine(label)
+    }
+
+    static func == (lhs: ToolDescriptor, rhs: ToolDescriptor) -> Bool {
+        lhs.icon == rhs.icon && lhs.label == rhs.label
+    }
+}
+
+// MARK: - Previews
+
+#Preview("Keyboard Toolbar") {
+    VStack {
+        Spacer()
+
+        // Simulated text editor
+        RoundedRectangle(cornerRadius: 12)
+            .fill(.gray.opacity(0.1))
+            .frame(height: 300)
+            .overlay(
+                Text("Text editor content...")
+                    .foregroundStyle(.secondary)
+            )
+            .padding()
+
+        // Toolbar
+        AdaptiveKeyboardToolbar(
+            selectedRange: .constant(nil),
+            content: .constant("Sample chapter content"),
+            wordCount: 1247,
+            onFormatAction: { action in
+                print("Format action: \(action)")
+            }
+        )
+    }
+    .background(Color(.systemGroupedBackground))
+}
+
+#Preview("Dark Mode") {
+    VStack {
+        Spacer()
+
+        Text("Chapter content goes here...")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemBackground))
+
+        AdaptiveKeyboardToolbar(
+            selectedRange: .constant(nil),
+            content: .constant(""),
+            wordCount: 523,
+            onFormatAction: { _ in }
+        )
+    }
+    .preferredColorScheme(.dark)
+}

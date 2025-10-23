@@ -76,11 +76,44 @@ final class Chapter {
         content.count
     }
 
-    /// Returns a preview of the chapter content (first 100 characters)
+    /// Extract title from the first line of content (Apple Notes style)
+    ///
+    /// In the new free-form editing mode, the first line of content becomes the title.
+    /// This computed property extracts that title, falling back to the stored title
+    /// if the content is empty or for backward compatibility.
+    var extractedTitle: String {
+        // Get first line from content
+        if let firstLine = content.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false).first {
+            let extracted = String(firstLine).trimmingCharacters(in: .whitespaces)
+            if !extracted.isEmpty {
+                return extracted
+            }
+        }
+
+        // Fallback to stored title or default
+        return title.isEmpty ? "Untitled Chapter" : title
+    }
+
+    /// Get the body content (everything after the first line)
+    ///
+    /// Returns content excluding the title line for display purposes.
+    var bodyContent: String {
+        let lines = content.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+        if lines.count > 1 {
+            return String(lines[1])
+        }
+        return ""
+    }
+
+    /// Returns a preview of the chapter content (first 100 characters of body, excluding title)
     ///
     /// Used in the chapter list view to show a snippet of the content.
     var contentPreview: String {
-        let preview = content.prefix(100)
+        let body = bodyContent
+        if body.isEmpty {
+            return ""
+        }
+        let preview = body.prefix(100)
         return String(preview)
     }
 

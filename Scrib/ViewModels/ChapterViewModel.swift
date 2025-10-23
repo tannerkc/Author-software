@@ -79,6 +79,8 @@ final class ChapterViewModel {
     ///   - content: New content
     func updateChapterContent(_ chapter: Chapter, content: String) {
         chapter.content = content
+        // Sync the extracted title back to the title property for backward compatibility
+        chapter.title = chapter.extractedTitle
         scheduleAutoSave(for: chapter)
     }
 

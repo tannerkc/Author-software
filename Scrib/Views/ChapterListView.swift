@@ -46,6 +46,7 @@ struct ChapterListView: View {
             ForEach(filteredChapters) { chapter in
                 ChapterRowView(chapter: chapter)
                     .tag(chapter)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             deleteChapter(chapter)
@@ -82,8 +83,56 @@ struct ChapterListView: View {
             }
         }
         .navigationTitle(book.title)
-        .searchable(text: $searchText, prompt: "Search chapters")
+        .searchable(text: $searchText, prompt: "Search Chapters")
         .toolbar {
+            #if os(iOS)
+            // Top toolbar: Share and ellipsis menu on right
+            ToolbarItem(placement: .topBarTrailing) {
+                ShareLink(item: book.title) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        showingNewChapterSheet = true
+                    } label: {
+                        Label("New Chapter", systemImage: "doc.badge.plus")
+                    }
+
+                    EditButton()
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        // Delete book action
+                    } label: {
+                        Label("Delete Book", systemImage: "trash")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                }
+            }
+
+            // Bottom toolbar: Search bar, gap, then circular plus button
+            DefaultToolbarItem(kind: .search, placement: .bottomBar)
+
+            ToolbarSpacer(.flexible, placement: .bottomBar)
+
+            ToolbarItem(placement: .bottomBar) {
+                Button {
+                    showingNewChapterSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                }
+            }
+            #else
+            // macOS toolbar
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingNewChapterSheet = true
@@ -92,13 +141,6 @@ struct ChapterListView: View {
                 }
             }
 
-            #if os(iOS)
-            ToolbarItem(placement: .secondaryAction) {
-                EditButton()
-            }
-            #endif
-
-            #if os(macOS)
             ToolbarItem(placement: .secondaryAction) {
                 Menu {
                     Button {
@@ -235,7 +277,7 @@ struct ChapterRowView: View {
                     .font(.title3)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(chapter.title)
+                    Text(chapter.extractedTitle)
                         .font(.body)
                         .fontWeight(.medium)
                         .lineLimit(1)
