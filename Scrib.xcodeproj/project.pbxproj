@@ -27,6 +27,7 @@
 		A018 /* InlineNoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B018 /* InlineNoteSheet.swift */; };
 		A019 /* ChapterMetadataSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B019 /* ChapterMetadataSheet.swift */; };
 		A020 /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B020 /* FormatToolbar.swift */; };
+		A021 /* RichTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B021 /* RichTextEditor.swift */; };
 		A101 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B101 /* BookModelTests.swift */; };
 		A102 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B102 /* ChapterModelTests.swift */; };
 /* End PBXBuildFile section */
@@ -63,6 +64,7 @@
 		B018 /* InlineNoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineNoteSheet.swift; sourceTree = "<group>"; };
 		B019 /* ChapterMetadataSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMetadataSheet.swift; sourceTree = "<group>"; };
 		B020 /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
+		B021 /* RichTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichTextEditor.swift; sourceTree = "<group>"; };
 		B101 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
 		B102 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
 		P001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -176,6 +178,7 @@
 				B018 /* InlineNoteSheet.swift */,
 				B019 /* ChapterMetadataSheet.swift */,
 				B020 /* FormatToolbar.swift */,
+				B021 /* RichTextEditor.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -306,6 +309,7 @@
 				A018 /* InlineNoteSheet.swift in Sources */,
 				A019 /* ChapterMetadataSheet.swift in Sources */,
 				A020 /* FormatToolbar.swift in Sources */,
+				A021 /* RichTextEditor.swift in Sources */,
 				A013 /* Date+Extensions.swift in Sources */,
 				A014 /* Color+Extensions.swift in Sources */,
 			);
