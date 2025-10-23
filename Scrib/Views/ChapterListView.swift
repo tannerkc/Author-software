@@ -17,6 +17,9 @@ struct ChapterListView: View {
     /// SwiftData model context
     @Environment(\.modelContext) private var modelContext
 
+    /// Edit mode for the list
+    @Environment(\.editMode) private var editMode
+
     /// The book whose chapters are being displayed
     let book: Book
 
@@ -41,11 +44,15 @@ struct ChapterListView: View {
     /// Search text for filtering chapters
     @State private var searchText = ""
 
+    /// Show export sheet
+    @State private var showingExportSheet = false
+
     var body: some View {
         List(selection: $selection) {
             ForEach(filteredChapters) { chapter in
                 ChapterRowView(chapter: chapter)
                     .tag(chapter)
+                    .id(chapter.id) // iOS 26: Explicit ID for scroll performance
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
@@ -82,8 +89,8 @@ struct ChapterListView: View {
                 reorderChapters(from: source, to: destination)
             }
         }
+        .scrollContentBackground(.hidden) // iOS 26: Enable Liquid Glass transparency
         .navigationTitle(book.title)
-        .searchable(text: $searchText, prompt: "Search Chapters")
         .toolbar {
             #if os(iOS)
             // Top toolbar: Share and ellipsis menu on right
@@ -101,7 +108,25 @@ struct ChapterListView: View {
                         Label("New Chapter", systemImage: "doc.badge.plus")
                     }
 
-                    EditButton()
+                    Button {
+                        withAnimation {
+                            if editMode?.wrappedValue == .active {
+                                editMode?.wrappedValue = .inactive
+                            } else {
+                                editMode?.wrappedValue = .active
+                            }
+                        }
+                    } label: {
+                        Label(editMode?.wrappedValue == .active ? "Done" : "Edit", systemImage: "arrow.up.and.down")
+                    }
+
+                    Divider()
+
+                    Button {
+                        showingExportSheet = true
+                    } label: {
+                        Label("Export Book", systemImage: "square.and.arrow.up.on.square")
+                    }
 
                     Divider()
 
@@ -111,16 +136,20 @@ struct ChapterListView: View {
                         Label("Delete Book", systemImage: "trash")
                     }
                 } label: {
-                    Label("More", systemImage: "ellipsis.circle")
+                    Label("More", systemImage: "ellipsis")
                 }
             }
 
-            // Bottom toolbar: Search bar, gap, then circular plus button
-            DefaultToolbarItem(kind: .search, placement: .bottomBar)
+            // Bottom toolbar: Independent search field and compose button
+            ToolbarItemGroup(placement: .bottomBar) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
 
-            ToolbarSpacer(.flexible, placement: .bottomBar)
+                TextField("Search", text: $searchText)
+                    .textFieldStyle(.plain)
 
-            ToolbarItem(placement: .bottomBar) {
+                Spacer()
+
                 Button {
                     showingNewChapterSheet = true
                 } label: {
@@ -148,8 +177,16 @@ struct ChapterListView: View {
                     } label: {
                         Label("New Chapter", systemImage: "doc.badge.plus")
                     }
+
+                    Divider()
+
+                    Button {
+                        showingExportSheet = true
+                    } label: {
+                        Label("Export Book", systemImage: "square.and.arrow.up.on.square")
+                    }
                 } label: {
-                    Label("Options", systemImage: "ellipsis.circle")
+                    Label("Options", systemImage: "ellipsis")
                 }
             }
             #endif
@@ -165,6 +202,9 @@ struct ChapterListView: View {
                     chapterTitle = ""
                 }
             )
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            ExportView(book: book)
         }
         .alert("Rename Chapter", isPresented: $showingRenameAlert) {
             TextField("Title", text: $chapterTitle)
@@ -282,7 +322,7 @@ struct ChapterRowView: View {
                         .fontWeight(.medium)
                         .lineLimit(1)
 
-                    if !chapter.isEmpty {
+                    if !chapter.contentPreview.isEmpty {
                         Text(chapter.contentPreview)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -304,7 +344,7 @@ struct ChapterRowView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Text(chapter.lastModified, style: .relative)
+                    Text(chapter.lastModified.simpleFormatted)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }

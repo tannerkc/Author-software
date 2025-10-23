@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftData
+import UIKit
 
 /// Represents a chapter within a book
 ///
@@ -32,6 +33,10 @@ final class Chapter {
 
     /// Timestamp of the most recent edit to this chapter
     var lastModified: Date
+
+    /// Rich text formatting data (stored as RTF)
+    /// Preserves text styling (Title, Heading, Body) and character formatting (bold, italic, etc.)
+    var formattedContent: Data?
 
     /// Reference to the parent book
     var book: Book?
@@ -144,5 +149,70 @@ extension Chapter {
     func updateTitle(_ newTitle: String) {
         title = newTitle
         lastModified = Date()
+    }
+
+    /// Get the attributed content from stored RTF data, or create default from plain text
+    /// - Returns: NSAttributedString with formatting, or default styled plain text
+    func getAttributedContent() -> NSAttributedString {
+        // If we have formatted content, try to load it
+        if let rtfData = formattedContent {
+            print("📖 Loading RTF: \(rtfData.count) bytes")
+
+            do {
+                let attributedString = try NSAttributedString(
+                    data: rtfData,
+                    options: [.documentType: NSAttributedString.DocumentType.rtf],
+                    documentAttributes: nil
+                )
+                print("✅ RTF loaded successfully - \(attributedString.length) characters")
+                return attributedString
+            } catch {
+                print("❌ RTF loading failed: \(error.localizedDescription)")
+                // Fall through to create default from plain text
+            }
+        } else {
+            print("⚠️ No RTF data available, using plain text")
+        }
+
+        // Create default attributed string from plain text
+        let defaultFont = UIFont.systemFont(ofSize: 17)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: defaultFont,
+            .foregroundColor: UIColor.label
+        ]
+        return NSAttributedString(string: content, attributes: attributes)
+    }
+
+    /// Save attributed content with dual storage (plain text + RTF)
+    /// - Parameter attributedString: The attributed string to save
+    ///
+    /// This method implements a fail-safe dual storage approach:
+    /// 1. Plain text is ALWAYS saved first (guaranteed to succeed)
+    /// 2. RTF formatting is attempted but may fail gracefully
+    /// 3. If RTF conversion fails, plain text backup ensures zero data loss
+    func setAttributedContent(_ attributedString: NSAttributedString) {
+        // STEP 1: Save plain text FIRST (critical - never fails)
+        // This ensures content is always preserved even if RTF conversion fails
+        content = attributedString.string
+        lastModified = Date()
+
+        print("💾 Saving content: \(content.count) characters")
+
+        // STEP 2: Attempt RTF conversion for formatting preservation
+        // If this fails, we've already saved the plain text above
+        let range = NSRange(location: 0, length: attributedString.length)
+
+        do {
+            let rtfData = try attributedString.data(
+                from: range,
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            )
+            formattedContent = rtfData
+            print("✅ RTF formatting saved: \(rtfData.count) bytes")
+        } catch {
+            // Silent fallback: Plain text is already saved, so just log the formatting loss
+            formattedContent = nil
+            print("⚠️ RTF conversion failed, plain text preserved: \(error.localizedDescription)")
+        }
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6C17D2632EAAF3A900EA2C6B /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 6C17D2622EAAF3A900EA2C6B /* ZIPFoundation */; };
 		A001 /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* ScribApp.swift */; };
 		A002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* ContentView.swift */; };
 		A003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B003 /* Assets.xcassets */; };
@@ -26,8 +27,14 @@
 		A017 /* CharacterMarkerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B017 /* CharacterMarkerSheet.swift */; };
 		A018 /* InlineNoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B018 /* InlineNoteSheet.swift */; };
 		A019 /* ChapterMetadataSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B019 /* ChapterMetadataSheet.swift */; };
-		A020 /* FormatToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B020 /* FormatToolbar.swift */; };
+		A020 /* FormatMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B020 /* FormatMenuSheet.swift */; };
 		A021 /* RichTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B021 /* RichTextEditor.swift */; };
+		A022 /* ExportMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = B022 /* ExportMetadata.swift */; };
+		A023 /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B023 /* ExportManager.swift */; };
+		A024 /* PDFExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B024 /* PDFExporter.swift */; };
+		A025 /* DOCXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* DOCXExporter.swift */; };
+		A026 /* EPUBExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B026 /* EPUBExporter.swift */; };
+		A027 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B027 /* ExportView.swift */; };
 		A101 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B101 /* BookModelTests.swift */; };
 		A102 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B102 /* ChapterModelTests.swift */; };
 /* End PBXBuildFile section */
@@ -63,8 +70,14 @@
 		B017 /* CharacterMarkerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterMarkerSheet.swift; sourceTree = "<group>"; };
 		B018 /* InlineNoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineNoteSheet.swift; sourceTree = "<group>"; };
 		B019 /* ChapterMetadataSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMetadataSheet.swift; sourceTree = "<group>"; };
-		B020 /* FormatToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatToolbar.swift; sourceTree = "<group>"; };
+		B020 /* FormatMenuSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatMenuSheet.swift; sourceTree = "<group>"; };
 		B021 /* RichTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichTextEditor.swift; sourceTree = "<group>"; };
+		B022 /* ExportMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportMetadata.swift; sourceTree = "<group>"; };
+		B023 /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
+		B024 /* PDFExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFExporter.swift; sourceTree = "<group>"; };
+		B025 /* DOCXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOCXExporter.swift; sourceTree = "<group>"; };
+		B026 /* EPUBExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPUBExporter.swift; sourceTree = "<group>"; };
+		B027 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		B101 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
 		B102 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
 		P001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -76,6 +89,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C17D2632EAAF3A900EA2C6B /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,19 +109,20 @@
 				G002 /* Scrib */,
 				G100 /* ScribTests */,
 				G999 /* Products */,
-				6C17D2602EAAA48600EA2C6B /* AppIcon.icon */,
 			);
 			sourceTree = "<group>";
 		};
 		G002 /* Scrib */ = {
 			isa = PBXGroup;
 			children = (
+				6C17D2602EAAA48600EA2C6B /* AppIcon.icon */,
 				G003 /* App */,
 				G004 /* Models */,
 				G005 /* Views */,
 				G006 /* ViewModels */,
 				G007 /* Extensions */,
 				G008 /* Resources */,
+				G009 /* Services */,
 			);
 			path = Scrib;
 			sourceTree = "<group>";
@@ -127,6 +142,7 @@
 				B005 /* Chapter.swift */,
 				B015 /* ChapterMetadata.swift */,
 				B006 /* DataStore.swift */,
+				B022 /* ExportMetadata.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -140,6 +156,7 @@
 				B011 /* ChapterEditorView.swift */,
 				B012 /* SettingsView.swift */,
 				G020 /* Components */,
+				G021 /* Export */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -170,6 +187,25 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		G009 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B023 /* ExportManager.swift */,
+				G010 /* Exporters */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		G010 /* Exporters */ = {
+			isa = PBXGroup;
+			children = (
+				B024 /* PDFExporter.swift */,
+				B025 /* DOCXExporter.swift */,
+				B026 /* EPUBExporter.swift */,
+			);
+			path = Exporters;
+			sourceTree = "<group>";
+		};
 		G020 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -177,10 +213,18 @@
 				B017 /* CharacterMarkerSheet.swift */,
 				B018 /* InlineNoteSheet.swift */,
 				B019 /* ChapterMetadataSheet.swift */,
-				B020 /* FormatToolbar.swift */,
+				B020 /* FormatMenuSheet.swift */,
 				B021 /* RichTextEditor.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		G021 /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				B027 /* ExportView.swift */,
+			);
+			path = Export;
 			sourceTree = "<group>";
 		};
 		G100 /* ScribTests */ = {
@@ -266,6 +310,9 @@
 				Base,
 			);
 			mainGroup = G001;
+			packageReferences = (
+				6C17D2612EAAF3A900EA2C6B /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			productRefGroup = G999 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -308,10 +355,16 @@
 				A017 /* CharacterMarkerSheet.swift in Sources */,
 				A018 /* InlineNoteSheet.swift in Sources */,
 				A019 /* ChapterMetadataSheet.swift in Sources */,
-				A020 /* FormatToolbar.swift in Sources */,
+				A020 /* FormatMenuSheet.swift in Sources */,
 				A021 /* RichTextEditor.swift in Sources */,
 				A013 /* Date+Extensions.swift in Sources */,
 				A014 /* Color+Extensions.swift in Sources */,
+				A022 /* ExportMetadata.swift in Sources */,
+				A023 /* ExportManager.swift in Sources */,
+				A024 /* PDFExporter.swift in Sources */,
+				A025 /* DOCXExporter.swift in Sources */,
+				A026 /* EPUBExporter.swift in Sources */,
+				A027 /* ExportView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,7 +445,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.1;
 			};
 			name = Debug;
 		};
@@ -446,7 +499,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.1;
 			};
 			name = Release;
 		};
@@ -482,7 +535,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.1;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -519,7 +572,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.1;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -532,15 +585,15 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.scrib.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.1;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Scrib.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Scrib";
 			};
@@ -554,15 +607,15 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.scrib.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 6.0;
+				SWIFT_VERSION = 6.1;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Scrib.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Scrib";
 			};
@@ -599,6 +652,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6C17D2612EAAF3A900EA2C6B /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.20;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6C17D2622EAAF3A900EA2C6B /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6C17D2612EAAF3A900EA2C6B /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = PR01 /* Project object */;
 }

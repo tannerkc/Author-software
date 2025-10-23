@@ -8,13 +8,15 @@
 
 import Foundation
 import SwiftData
+import Observation
 
 /// Central data management class for SwiftData persistence
 ///
 /// DataStore provides a centralized interface for managing the SwiftData model container
 /// and context. It handles initialization, sample data generation, and common operations.
 @MainActor
-final class DataStore: ObservableObject {
+@Observable
+final class DataStore {
     /// The SwiftData model container managing persistence
     let modelContainer: ModelContainer
 

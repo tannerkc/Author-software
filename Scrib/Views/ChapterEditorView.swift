@@ -14,15 +14,18 @@ import SwiftData
 /// ChapterEditorView provides a distraction-free writing environment with
 /// real-time word/character counts, auto-save, and a clean interface
 /// inspired by Apple Notes.
+///
+/// This view uses modern SwiftData patterns with @Bindable
+/// for automatic change tracking and persistence.
 struct ChapterEditorView: View {
     /// SwiftData model context
     @Environment(\.modelContext) private var modelContext
 
-    /// The chapter being edited
-    let chapter: Chapter
+    /// Scene phase for detecting app backgrounding
+    @Environment(\.scenePhase) private var scenePhase
 
-    /// View model for chapter operations
-    @State private var viewModel: ChapterViewModel?
+    /// The chapter being edited (passed directly to avoid @Query rebuild triggers)
+    @Bindable var chapter: Chapter
 
     /// Local state for the rich text editor (bound to chapter content)
     @State private var attributedText: NSAttributedString = NSAttributedString()
@@ -38,8 +41,8 @@ struct ChapterEditorView: View {
     @State private var showingInlineNote = false
     @State private var showingMetadata = false
 
-    /// Format toolbar visibility (replaces keyboard when true)
-    @State private var showingFormatToolbar = false
+    /// Format menu visibility
+    @State private var showingFormatMenu = false
 
     /// Chapter metadata
     @State private var chapterMetadata = ChapterMetadata()
@@ -50,6 +53,12 @@ struct ChapterEditorView: View {
     /// Simulated selected text for sheets (will be enhanced with actual selection)
     @State private var currentSelection = ""
 
+    /// Debounced save task for formatting changes
+    @State private var saveTask: Task<Void, Never>?
+
+    /// Show export sheet
+    @State private var showingExportSheet = false
+
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Rich Text Editor (Apple Notes style)
@@ -58,13 +67,15 @@ struct ChapterEditorView: View {
                 attributedText: $attributedText,
                 selectedRange: $textSelection,
                 isFocused: $isEditorFocused,
-                onTextChange: { newAttributedText in
-                    // Update chapter content with plain text for storage
-                    let plainText = newAttributedText.string
-                    viewModel?.updateChapterContent(chapter, content: plainText)
-                }
+                isEditable: !showingFormatMenu // Allow selection but prevent typing while format menu is open
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .id(chapter.id) // CRITICAL: Stable identity prevents view recreation
+            .onChange(of: attributedText) { _, newValue in
+                // Trigger debounced save when text changes
+                // This uses .onChange instead of a closure parameter to maintain stable view identity
+                debouncedSave(newValue, chapter: chapter)
+            }
 
             // MARK: - Adaptive Keyboard Toolbar
             #if os(iOS)
@@ -79,24 +90,27 @@ struct ChapterEditorView: View {
         .navigationTitle("")  // No navigation title - content speaks for itself
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            if viewModel == nil {
-                viewModel = ChapterViewModel(modelContext: modelContext)
+            loadChapterContent(chapter)
+        }
+        .onDisappear {
+            // CRITICAL: Force save when navigating away to ensure no data loss
+            forceSave(chapter)
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            // Save when app moves to background
+            if newPhase == .background {
+                forceSave(chapter)
             }
-
-            // Initialize attributed text from chapter content
-            // TODO: Load formatted content if available, otherwise create from plain text
-            let defaultFont = UIFont.systemFont(ofSize: 17)
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: defaultFont,
-                .foregroundColor: UIColor.label
-            ]
-            attributedText = NSAttributedString(string: chapter.content, attributes: attributes)
-
-            // Auto-focus for immediate typing
-            Task {
-                try? await Task.sleep(for: .milliseconds(100))
-                isEditorFocused = true
-            }
+        }
+        .sheet(isPresented: $showingFormatMenu) {
+            FormatMenuSheet(
+                currentTextStyle: $currentTextStyle,
+                onFormatAction: handleTextFormat
+            )
+            .presentationDetents([.height(250)])
+            .presentationBackgroundInteraction(.enabled) // Key modifier!
+            .interactiveDismissDisabled()
+            .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $showingCharacterMarker) {
             CharacterMarkerSheet(selectedText: currentSelection) { marker in
@@ -116,17 +130,17 @@ struct ChapterEditorView: View {
                 // TODO: Persist chapter metadata
             }
         }
-        .sheet(isPresented: $showingFormatToolbar) {
-            FormatToolbar(
-                selectedStyle: $currentTextStyle,
-                onApplyFormat: handleTextFormat,
-                onDismiss: {
-                    showingFormatToolbar = false
-                    isEditorFocused = true
-                }
-            )
-            .presentationDetents([.height(170)])
-            .presentationDragIndicator(.visible)
+        .sheet(isPresented: $showingExportSheet) {
+            // Get the parent book for export
+            if let book = chapter.book {
+                ExportView(book: book, chapter: chapter)
+            }
+        }
+        .onChange(of: showingFormatMenu) { _, isShowing in
+            // Dismiss keyboard when format menu opens
+            if isShowing {
+                isEditorFocused = false
+            }
         }
         .toolbar {
             #if os(iOS)
@@ -140,7 +154,7 @@ struct ChapterEditorView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
-                        // Export chapter
+                        showingExportSheet = true
                     } label: {
                         Label("Export Chapter", systemImage: "square.and.arrow.up.on.square")
                     }
@@ -154,10 +168,11 @@ struct ChapterEditorView: View {
                     Divider()
 
                     Button {
-                        viewModel?.saveChapter(chapter)
+                        forceSave(chapter)
                     } label: {
                         Label("Save Now", systemImage: "arrow.down.doc")
                     }
+                    .keyboardShortcut("s", modifiers: .command)
 
                     Divider()
 
@@ -174,7 +189,7 @@ struct ChapterEditorView: View {
             // macOS toolbar
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
-                    viewModel?.saveChapter(chapter)
+                    forceSave(chapter)
                 } label: {
                     Label("Save", systemImage: "square.and.arrow.down")
                 }
@@ -191,12 +206,7 @@ struct ChapterEditorView: View {
     private func handleFormatAction(_ action: AdaptiveKeyboardToolbar.FormatAction) {
         switch action {
         case .showFormatMenu:
-            isEditorFocused = false
-            // Delay to allow keyboard to dismiss before showing sheet
-            Task {
-                try? await Task.sleep(for: .milliseconds(100))
-                showingFormatToolbar = true
-            }
+            showingFormatMenu = true
         case .bold:
             handleTextFormat(.bold)
         case .italic:
@@ -291,6 +301,96 @@ struct ChapterEditorView: View {
         // Update the attributed text
         attributedText = mutableText
     }
+
+    // MARK: - Chapter Loading
+
+    /// Load chapter content when view appears
+    /// - Parameter chapter: The chapter to load
+    private func loadChapterContent(_ chapter: Chapter) {
+        // Load formatted content (RTF) or create default from plain text
+        attributedText = chapter.getAttributedContent()
+
+        // Auto-focus for immediate typing
+        Task {
+            try? await Task.sleep(for: .milliseconds(100))
+            isEditorFocused = true
+        }
+
+        print("📖 Loaded chapter: \(chapter.extractedTitle)")
+    }
+
+    // MARK: - Save Operations
+
+    /// Debounce save operations to avoid excessive writes during typing
+    /// - Parameters:
+    ///   - text: The attributed text to save
+    ///   - chapter: The chapter to update
+    private func debouncedSave(_ text: NSAttributedString, chapter: Chapter) {
+        // Cancel any existing save task
+        saveTask?.cancel()
+
+        // Create new save task with delay
+        saveTask = Task { @MainActor in
+            do {
+                // Wait for 500ms of inactivity before saving
+                try await Task.sleep(for: .milliseconds(500))
+
+                // Check if task was cancelled during sleep
+                guard !Task.isCancelled else { return }
+
+                // Perform the save
+                performSave(text, chapter: chapter)
+            } catch is CancellationError {
+                // Task was cancelled - this is normal, don't log
+            } catch {
+                // Unexpected error
+                print("⚠️ Save task error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Force an immediate save (for onDisappear, Cmd+S, backgrounding)
+    /// - Parameter chapter: The chapter to save
+    private func forceSave(_ chapter: Chapter) {
+        // Cancel any pending debounced save
+        saveTask?.cancel()
+        saveTask = nil
+
+        // Save immediately with current attributed text
+        print("🔒 Force saving chapter...")
+        chapter.setAttributedContent(attributedText)
+
+        // Trigger SwiftData save
+        do {
+            try modelContext.save()
+            print("✅ Force save complete")
+        } catch {
+            print("❌ Force save failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Perform the actual save operation
+    /// - Parameters:
+    ///   - text: The attributed text to save
+    ///   - chapter: The chapter to update
+    @MainActor
+    private func performSave(_ text: NSAttributedString, chapter: Chapter) {
+        print("💾 Auto-saving chapter...")
+
+        // Update chapter with new content
+        chapter.setAttributedContent(text)
+
+        // Update parent book's lastModified timestamp
+        chapter.book?.lastModified = Date()
+
+        // Trigger SwiftData save
+        do {
+            try modelContext.save()
+            print("✅ Auto-save complete")
+        } catch {
+            print("❌ Auto-save failed: \(error.localizedDescription)")
+        }
+    }
 }
 
 // MARK: - Previews
@@ -305,8 +405,10 @@ struct ChapterEditorView: View {
 }
 
 #Preview("Empty Chapter") {
+    let store = DataStore(inMemory: true)
     let chapter = Chapter(title: "Untitled Chapter", content: "")
+    store.modelContainer.mainContext.insert(chapter)
 
-    ChapterEditorView(chapter: chapter)
-        .modelContainer(DataStore(inMemory: true).modelContainer)
+    return ChapterEditorView(chapter: chapter)
+        .modelContainer(store.modelContainer)
 }

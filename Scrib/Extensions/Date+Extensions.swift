@@ -64,4 +64,19 @@ extension Date {
             return shortFormatted
         }
     }
+
+    /// Simple static formatting: time if today, date otherwise
+    var simpleFormatted: String {
+        if isToday {
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            formatter.dateStyle = .none
+            return formatter.string(from: self)
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .none
+            return formatter.string(from: self)
+        }
+    }
 }

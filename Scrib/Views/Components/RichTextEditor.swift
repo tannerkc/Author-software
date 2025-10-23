@@ -24,33 +24,27 @@ struct RichTextEditor: UIViewRepresentable {
     /// Focus state binding
     var isFocused: FocusState<Bool>.Binding
 
-    /// Callback when text changes
-    var onTextChange: ((NSAttributedString) -> Void)?
+    /// Whether the text view is editable (allows typing and keyboard)
+    /// When false, users can still select text and move cursor
+    var isEditable: Bool = true
 
     func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
-        textView.delegate = context.coordinator
-
-        // Appearance matching TextEditor
-        textView.font = .systemFont(ofSize: 17)
-        textView.backgroundColor = .systemBackground
-        textView.textContainerInset = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
-        textView.textContainer.lineFragmentPadding = 0
-
-        // Enable rich text features
-        textView.allowsEditingTextAttributes = true
-        textView.typingAttributes = defaultTypingAttributes()
-
-        // Accessibility
-        textView.isAccessibilityElement = true
-        textView.accessibilityLabel = "Chapter content"
-
-        return textView
+        // Return the coordinator's persistent text view instance
+        // This ensures the same UITextView is reused across SwiftUI updates
+        // makeUIView is only called ONCE when the view is first created
+        return context.coordinator.textView
     }
 
     func updateUIView(_ textView: UITextView, context: Context) {
-        // Update text if it changed externally
-        if textView.attributedText != attributedText {
+        // CRITICAL: Update coordinator's parent reference to maintain fresh bindings
+        // This ensures the coordinator always has access to the current binding values
+        context.coordinator.parent = self
+
+        // Only update text if it changed externally (not from user typing)
+        // Compare string content to avoid unnecessary UITextView updates
+        let textChanged = textView.attributedText.string != attributedText.string
+
+        if textChanged && !context.coordinator.isUpdatingFromUser {
             let oldSelectedRange = textView.selectedRange
             textView.attributedText = attributedText
 
@@ -59,6 +53,11 @@ struct RichTextEditor: UIViewRepresentable {
                oldSelectedRange.location <= textView.attributedText.length {
                 textView.selectedRange = oldSelectedRange
             }
+        }
+
+        // Update editability
+        if textView.isEditable != isEditable {
+            textView.isEditable = isEditable
         }
 
         // Update focus state
@@ -73,42 +72,81 @@ struct RichTextEditor: UIViewRepresentable {
         Coordinator(self)
     }
 
-    /// Default typing attributes for body text
-    private func defaultTypingAttributes() -> [NSAttributedString.Key: Any] {
-        [
-            .font: UIFont.systemFont(ofSize: 17),
-            .foregroundColor: UIColor.label
-        ]
-    }
-
     // MARK: - Coordinator
 
     class Coordinator: NSObject, UITextViewDelegate {
         var parent: RichTextEditor
+        var isUpdatingFromUser = false
+
+        /// Persistent UITextView instance (Malcolm Hall pattern)
+        /// This ensures the same view is reused across SwiftUI updates
+        lazy var textView: UITextView = {
+            let tv = UITextView()
+            tv.delegate = self
+
+            // Appearance matching TextEditor
+            tv.font = .systemFont(ofSize: 17)
+            tv.backgroundColor = .systemBackground
+            tv.textContainerInset = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
+            tv.textContainer.lineFragmentPadding = 0
+
+            // Enable rich text features
+            tv.allowsEditingTextAttributes = true
+            tv.typingAttributes = defaultTypingAttributes()
+
+            // Accessibility
+            tv.isAccessibilityElement = true
+            tv.accessibilityLabel = "Chapter content"
+
+            return tv
+        }()
 
         init(_ parent: RichTextEditor) {
             self.parent = parent
         }
 
-        func textViewDidChange(_ textView: UITextView) {
-            // Update binding
-            parent.attributedText = textView.attributedText
+        /// Default typing attributes for body text
+        private func defaultTypingAttributes() -> [NSAttributedString.Key: Any] {
+            [
+                .font: UIFont.systemFont(ofSize: 17),
+                .foregroundColor: UIColor.label
+            ]
+        }
 
-            // Notify callback
-            parent.onTextChange?(textView.attributedText)
+        func textViewDidChange(_ textView: UITextView) {
+            // Flag to prevent updateUIView from interfering during user typing
+            isUpdatingFromUser = true
+
+            // Use asynchronous state updates (Chris Eidhof pattern)
+            // This prevents "modifying state during view update" warnings
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+
+                // Update binding only - parent will handle save via .onChange modifier
+                self.parent.attributedText = textView.attributedText
+
+                // Reset flag after update cycle completes
+                self.isUpdatingFromUser = false
+            }
         }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
-            // Update selected range
-            parent.selectedRange = textView.selectedRange
+            // Update selected range asynchronously
+            DispatchQueue.main.async { [weak self] in
+                self?.parent.selectedRange = textView.selectedRange
+            }
         }
 
         func textViewDidBeginEditing(_ textView: UITextView) {
-            parent.isFocused.wrappedValue = true
+            DispatchQueue.main.async { [weak self] in
+                self?.parent.isFocused.wrappedValue = true
+            }
         }
 
         func textViewDidEndEditing(_ textView: UITextView) {
-            parent.isFocused.wrappedValue = false
+            DispatchQueue.main.async { [weak self] in
+                self?.parent.isFocused.wrappedValue = false
+            }
         }
     }
 }

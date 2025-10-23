@@ -67,15 +67,6 @@ struct AdaptiveKeyboardToolbar: View {
                         .frame(height: 24)
                         .padding(.horizontal, 4)
 
-                    // Extended tools (swipeable)
-                    ForEach(extendedTools, id: \.self) { tool in
-                        toolButton(for: tool)
-                    }
-
-                    Divider()
-                        .frame(height: 24)
-                        .padding(.horizontal, 4)
-
                     // Scrib-specific tools
                     ForEach(scribTools, id: \.self) { tool in
                         toolButton(for: tool)
@@ -90,7 +81,7 @@ struct AdaptiveKeyboardToolbar: View {
                 .padding(.horizontal, 8)
 
             // MARK: - Word Count
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("\(wordCount)")
                     .font(.caption.monospacedDigit())
                     .fontWeight(.medium)
@@ -99,13 +90,14 @@ struct AdaptiveKeyboardToolbar: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            .padding(.trailing, 16)
+            .padding(.trailing, 12)
             .frame(minWidth: 60)
         }
         .frame(height: 48)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 8)
         .glassEffect(.regular.interactive(), in: .capsule)
         .padding(.bottom, 8)
+        .padding(.horizontal, 12)
     }
 
     // MARK: - Tool Button
@@ -131,26 +123,18 @@ struct AdaptiveKeyboardToolbar: View {
     private var coreTools: [ToolDescriptor] {
         [
             ToolDescriptor(icon: "textformat", label: "Format", action: .showFormatMenu, tint: .primary),
-            ToolDescriptor(icon: "bold", label: "Bold", action: .bold),
-            ToolDescriptor(icon: "italic", label: "Italic", action: .italic),
-            ToolDescriptor(icon: "underline", label: "Underline", action: .underline),
-            ToolDescriptor(icon: "highlighter", label: "Highlight", action: .highlight(.yellow)),
-            ToolDescriptor(icon: "list.bullet", label: "Bullet List", action: .bulletList),
-            ToolDescriptor(icon: "list.number", label: "Numbered List", action: .numberedList),
+            ToolDescriptor(icon: "text.quote", label: "Quote", action: .quote),
+            ToolDescriptor(icon: "link", label: "Insert Link", action: .link),
+            ToolDescriptor(icon: "photo", label: "Insert Image", action: .image),
+            ToolDescriptor(icon: "tablecells", label: "Insert Table", action: .table),
         ]
     }
 
     /// Extended tools (swipeable, standard features)
     private var extendedTools: [ToolDescriptor] {
         [
-            ToolDescriptor(icon: "strikethrough", label: "Strikethrough", action: .strikethrough),
-            ToolDescriptor(icon: "checklist", label: "Checklist", action: .checklist),
-            ToolDescriptor(icon: "increase.indent", label: "Indent", action: .indent),
-            ToolDescriptor(icon: "decrease.indent", label: "Outdent", action: .outdent),
-            ToolDescriptor(icon: "text.quote", label: "Quote", action: .quote),
-            ToolDescriptor(icon: "link", label: "Insert Link", action: .link),
-            ToolDescriptor(icon: "photo", label: "Insert Image", action: .image),
-            ToolDescriptor(icon: "tablecells", label: "Insert Table", action: .table),
+            // Extended tools removed - all formatting now in Format menu (Aa button)
+            // Content insertion tools moved to core tools
         ]
     }
 

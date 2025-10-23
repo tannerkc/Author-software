@@ -16,7 +16,7 @@ import SwiftData
 @main
 struct ScribApp: App {
     /// Data store instance for the app
-    @StateObject private var dataStore = DataStore()
+    @State private var dataStore = DataStore()
 
     /// Track whether this is the first launch
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false

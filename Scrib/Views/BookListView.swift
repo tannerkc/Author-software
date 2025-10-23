@@ -45,6 +45,12 @@ struct BookListView: View {
     /// Search text for filtering books
     @State private var searchText = ""
 
+    /// Book to export
+    @State private var bookToExport: Book?
+
+    /// Show export sheet
+    @State private var showingExportSheet = false
+
     var body: some View {
         List(selection: $selection) {
             ForEach(filteredBooks) { book in
@@ -72,6 +78,13 @@ struct BookListView: View {
                             duplicateBook(book)
                         } label: {
                             Label("Duplicate", systemImage: "doc.on.doc")
+                        }
+
+                        Button {
+                            bookToExport = book
+                            showingExportSheet = true
+                        } label: {
+                            Label("Export Book", systemImage: "square.and.arrow.up")
                         }
 
                         Divider()
@@ -138,6 +151,11 @@ struct BookListView: View {
 
             Button("Rename") {
                 renameBook()
+            }
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            if let book = bookToExport {
+                ExportView(book: book)
             }
         }
         .overlay {
@@ -256,7 +274,7 @@ struct BookRowView: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(book.lastModified, style: .relative)
+                    Text(book.lastModified.simpleFormatted)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
 
