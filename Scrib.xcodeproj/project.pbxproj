@@ -7,64 +7,64 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA0000000000000000000001 /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000001 /* ScribApp.swift */; };
-		AA0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000002 /* ContentView.swift */; };
-		AA0000000000000000000003 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000003 /* Book.swift */; };
-		AA0000000000000000000004 /* Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000004 /* Chapter.swift */; };
-		AA0000000000000000000005 /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000005 /* DataStore.swift */; };
-		AA0000000000000000000006 /* BookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000006 /* BookViewModel.swift */; };
-		AA0000000000000000000007 /* ChapterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000007 /* ChapterViewModel.swift */; };
-		AA0000000000000000000008 /* BookListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000008 /* BookListView.swift */; };
-		AA0000000000000000000009 /* ChapterListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000009 /* ChapterListView.swift */; };
-		AA0000000000000000000010 /* ChapterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000010 /* ChapterEditorView.swift */; };
-		AA0000000000000000000011 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000011 /* SettingsView.swift */; };
-		AA0000000000000000000012 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000012 /* Date+Extensions.swift */; };
-		AA0000000000000000000013 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000013 /* Color+Extensions.swift */; };
-		AA0000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000014 /* Assets.xcassets */; };
-		AA0000000000000000000020 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000020 /* BookModelTests.swift */; };
-		AA0000000000000000000021 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000021 /* ChapterModelTests.swift */; };
+		3D1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift */; };
+		3D1A2B3C4D5E6F7890ABCD01 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD01 /* ContentView.swift */; };
+		3D1A2B3C4D5E6F7890ABCD02 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD02 /* Book.swift */; };
+		3D1A2B3C4D5E6F7890ABCD03 /* Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD03 /* Chapter.swift */; };
+		3D1A2B3C4D5E6F7890ABCD04 /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD04 /* DataStore.swift */; };
+		3D1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift */; };
+		3D1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift */; };
+		3D1A2B3C4D5E6F7890ABCD07 /* BookListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD07 /* BookListView.swift */; };
+		3D1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift */; };
+		3D1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift */; };
+		3D1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift */; };
+		3D1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift */; };
+		3D1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift */; };
+		3D1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets */; };
+		3D1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift */; };
+		3D1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		CC0000000000000000000001 /* PBXContainerItemProxy */ = {
+		7F8A9B0C1D2E3F4050607182 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = DD0000000000000000000001 /* Project object */;
+			containerPortal = 1A2B3C4D5E6F708192A3B4C5 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = EE0000000000000000000001;
+			remoteGlobalIDString = 2B3C4D5E6F708192A3B4C5D6;
 			remoteInfo = Scrib;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		BB0000000000000000000001 /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
-		BB0000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000003 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
-		BB0000000000000000000004 /* Chapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chapter.swift; sourceTree = "<group>"; };
-		BB0000000000000000000005 /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
-		BB0000000000000000000006 /* BookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookViewModel.swift; sourceTree = "<group>"; };
-		BB0000000000000000000007 /* ChapterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterViewModel.swift; sourceTree = "<group>"; };
-		BB0000000000000000000008 /* BookListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookListView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000009 /* ChapterListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000010 /* ChapterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterEditorView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000011 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		BB0000000000000000000012 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
-		BB0000000000000000000013 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
-		BB0000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		BB0000000000000000000020 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
-		BB0000000000000000000021 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
-		EE0000000000000000000001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		EE0000000000000000000002 /* ScribTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B3C4D5E6F708192A3B4C5D6 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD01 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD02 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD03 /* Chapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chapter.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD04 /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookViewModel.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterViewModel.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD07 /* BookListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookListView.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListView.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterEditorView.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
+		4E1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
+		8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		FF0000000000000000000001 /* Frameworks */ = {
+		5C6D7E8F90A1B2C3D4E5F607 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF0000000000000000000002 /* Frameworks */ = {
+		5C6D7E8F90A1B2C3D4E5F608 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -74,98 +74,98 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		GG0000000000000000000001 = {
+		6D7E8F90A1B2C3D4E5F60718 = {
 			isa = PBXGroup;
 			children = (
-				GG0000000000000000000002 /* Scrib */,
-				GG0000000000000000000020 /* ScribTests */,
-				GG0000000000000000000030 /* Products */,
+				6D7E8F90A1B2C3D4E5F60719 /* Scrib */,
+				6D7E8F90A1B2C3D4E5F60730 /* ScribTests */,
+				6D7E8F90A1B2C3D4E5F60740 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000002 /* Scrib */ = {
+		6D7E8F90A1B2C3D4E5F60719 /* Scrib */ = {
 			isa = PBXGroup;
 			children = (
-				GG0000000000000000000003 /* App */,
-				GG0000000000000000000004 /* Models */,
-				GG0000000000000000000005 /* Views */,
-				GG0000000000000000000006 /* ViewModels */,
-				GG0000000000000000000007 /* Extensions */,
-				GG0000000000000000000008 /* Resources */,
+				6D7E8F90A1B2C3D4E5F60720 /* App */,
+				6D7E8F90A1B2C3D4E5F60721 /* Models */,
+				6D7E8F90A1B2C3D4E5F60722 /* Views */,
+				6D7E8F90A1B2C3D4E5F60723 /* ViewModels */,
+				6D7E8F90A1B2C3D4E5F60724 /* Extensions */,
+				6D7E8F90A1B2C3D4E5F60725 /* Resources */,
 			);
 			path = Scrib;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000003 /* App */ = {
+		6D7E8F90A1B2C3D4E5F60720 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000001 /* ScribApp.swift */,
+				4E1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000004 /* Models */ = {
+		6D7E8F90A1B2C3D4E5F60721 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000003 /* Book.swift */,
-				BB0000000000000000000004 /* Chapter.swift */,
-				BB0000000000000000000005 /* DataStore.swift */,
+				4E1A2B3C4D5E6F7890ABCD02 /* Book.swift */,
+				4E1A2B3C4D5E6F7890ABCD03 /* Chapter.swift */,
+				4E1A2B3C4D5E6F7890ABCD04 /* DataStore.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000005 /* Views */ = {
+		6D7E8F90A1B2C3D4E5F60722 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000002 /* ContentView.swift */,
-				BB0000000000000000000008 /* BookListView.swift */,
-				BB0000000000000000000009 /* ChapterListView.swift */,
-				BB0000000000000000000010 /* ChapterEditorView.swift */,
-				BB0000000000000000000011 /* SettingsView.swift */,
+				4E1A2B3C4D5E6F7890ABCD01 /* ContentView.swift */,
+				4E1A2B3C4D5E6F7890ABCD07 /* BookListView.swift */,
+				4E1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift */,
+				4E1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift */,
+				4E1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000006 /* ViewModels */ = {
+		6D7E8F90A1B2C3D4E5F60723 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000006 /* BookViewModel.swift */,
-				BB0000000000000000000007 /* ChapterViewModel.swift */,
+				4E1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift */,
+				4E1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000007 /* Extensions */ = {
+		6D7E8F90A1B2C3D4E5F60724 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000012 /* Date+Extensions.swift */,
-				BB0000000000000000000013 /* Color+Extensions.swift */,
+				4E1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift */,
+				4E1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000008 /* Resources */ = {
+		6D7E8F90A1B2C3D4E5F60725 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000014 /* Assets.xcassets */,
+				4E1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000020 /* ScribTests */ = {
+		6D7E8F90A1B2C3D4E5F60730 /* ScribTests */ = {
 			isa = PBXGroup;
 			children = (
-				BB0000000000000000000020 /* BookModelTests.swift */,
-				BB0000000000000000000021 /* ChapterModelTests.swift */,
+				4E1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift */,
+				4E1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift */,
 			);
 			path = ScribTests;
 			sourceTree = "<group>";
 		};
-		GG0000000000000000000030 /* Products */ = {
+		6D7E8F90A1B2C3D4E5F60740 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				EE0000000000000000000001 /* Scrib.app */,
-				EE0000000000000000000002 /* ScribTests.xctest */,
+				2B3C4D5E6F708192A3B4C5D6 /* Scrib.app */,
+				8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -173,13 +173,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		EE0000000000000000000001 /* Scrib */ = {
+		2B3C4D5E6F708192A3B4C5D6 /* Scrib */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = HH0000000000000000000001 /* Build configuration list for PBXNativeTarget "Scrib" */;
+			buildConfigurationList = 9H0I1J2K3L4M5N6O7P8Q9R0S /* Build configuration list for PBXNativeTarget "Scrib" */;
 			buildPhases = (
-				FF0000000000000000000001 /* Frameworks */,
-				II0000000000000000000001 /* Sources */,
-				JJ0000000000000000000001 /* Resources */,
+				5C6D7E8F90A1B2C3D4E5F607 /* Frameworks */,
+				0C1D2E3F4050617283940A5B /* Sources */,
+				0D1E2F3040506172839405BC /* Resources */,
 			);
 			buildRules = (
 			);
@@ -187,46 +187,46 @@
 			);
 			name = Scrib;
 			productName = Scrib;
-			productReference = EE0000000000000000000001 /* Scrib.app */;
+			productReference = 2B3C4D5E6F708192A3B4C5D6 /* Scrib.app */;
 			productType = "com.apple.product-type.application";
 		};
-		EE0000000000000000000003 /* ScribTests */ = {
+		8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = HH0000000000000000000002 /* Build configuration list for PBXNativeTarget "ScribTests" */;
+			buildConfigurationList = 9H0I1J2K3L4M5N6O7P8Q9R1T /* Build configuration list for PBXNativeTarget "ScribTests" */;
 			buildPhases = (
-				FF0000000000000000000002 /* Frameworks */,
-				II0000000000000000000002 /* Sources */,
+				5C6D7E8F90A1B2C3D4E5F608 /* Frameworks */,
+				0C1D2E3F4050617283940A6C /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				CC0000000000000000000002 /* PBXTargetDependency */,
+				0E1F20314050617283940A6D /* PBXTargetDependency */,
 			);
 			name = ScribTests;
 			productName = ScribTests;
-			productReference = EE0000000000000000000002 /* ScribTests.xctest */;
+			productReference = 8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		DD0000000000000000000001 /* Project object */ = {
+		1A2B3C4D5E6F708192A3B4C5 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					EE0000000000000000000001 = {
+					2B3C4D5E6F708192A3B4C5D6 = {
 						CreatedOnToolsVersion = 16.0;
 					};
-					EE0000000000000000000003 = {
+					8G9H0I1J2K3L4M5N6O7P8Q9R = {
 						CreatedOnToolsVersion = 16.0;
-						TestTargetID = EE0000000000000000000001;
+						TestTargetID = 2B3C4D5E6F708192A3B4C5D6;
 					};
 				};
 			};
-			buildConfigurationList = HH0000000000000000000003 /* Build configuration list for PBXProject "Scrib" */;
+			buildConfigurationList = 9H0I1J2K3L4M5N6O7P8Q9R2U /* Build configuration list for PBXProject "Scrib" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -234,70 +234,70 @@
 				en,
 				Base,
 			);
-			mainGroup = GG0000000000000000000001;
-			productRefGroup = GG0000000000000000000030 /* Products */;
+			mainGroup = 6D7E8F90A1B2C3D4E5F60718;
+			productRefGroup = 6D7E8F90A1B2C3D4E5F60740 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				EE0000000000000000000001 /* Scrib */,
-				EE0000000000000000000003 /* ScribTests */,
+				2B3C4D5E6F708192A3B4C5D6 /* Scrib */,
+				8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		JJ0000000000000000000001 /* Resources */ = {
+		0D1E2F3040506172839405BC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA0000000000000000000014 /* Assets.xcassets in Resources */,
+				3D1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		II0000000000000000000001 /* Sources */ = {
+		0C1D2E3F4050617283940A5B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA0000000000000000000001 /* ScribApp.swift in Sources */,
-				AA0000000000000000000002 /* ContentView.swift in Sources */,
-				AA0000000000000000000003 /* Book.swift in Sources */,
-				AA0000000000000000000004 /* Chapter.swift in Sources */,
-				AA0000000000000000000005 /* DataStore.swift in Sources */,
-				AA0000000000000000000006 /* BookViewModel.swift in Sources */,
-				AA0000000000000000000007 /* ChapterViewModel.swift in Sources */,
-				AA0000000000000000000008 /* BookListView.swift in Sources */,
-				AA0000000000000000000009 /* ChapterListView.swift in Sources */,
-				AA0000000000000000000010 /* ChapterEditorView.swift in Sources */,
-				AA0000000000000000000011 /* SettingsView.swift in Sources */,
-				AA0000000000000000000012 /* Date+Extensions.swift in Sources */,
-				AA0000000000000000000013 /* Color+Extensions.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD01 /* ContentView.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD02 /* Book.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD03 /* Chapter.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD04 /* DataStore.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD07 /* BookListView.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		II0000000000000000000002 /* Sources */ = {
+		0C1D2E3F4050617283940A6C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA0000000000000000000020 /* BookModelTests.swift in Sources */,
-				AA0000000000000000000021 /* ChapterModelTests.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift in Sources */,
+				3D1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		CC0000000000000000000002 /* PBXTargetDependency */ = {
+		0E1F20314050617283940A6D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = EE0000000000000000000001 /* Scrib */;
-			targetProxy = CC0000000000000000000001 /* PBXContainerItemProxy */;
+			target = 2B3C4D5E6F708192A3B4C5D6 /* Scrib */;
+			targetProxy = 7F8A9B0C1D2E3F4050607182 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		KK0000000000000000000001 /* Debug */ = {
+		A0B1C2D3E4F5060718293A4B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -359,7 +359,7 @@
 			};
 			name = Debug;
 		};
-		KK0000000000000000000002 /* Release */ = {
+		A0B1C2D3E4F5060718293A4C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -413,7 +413,7 @@
 			};
 			name = Release;
 		};
-		KK0000000000000000000003 /* Debug */ = {
+		A0B1C2D3E4F5060718293A4D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -452,7 +452,7 @@
 			};
 			name = Debug;
 		};
-		KK0000000000000000000004 /* Release */ = {
+		A0B1C2D3E4F5060718293A4E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -491,7 +491,7 @@
 			};
 			name = Release;
 		};
-		KK0000000000000000000005 /* Debug */ = {
+		A0B1C2D3E4F5060718293A4F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -513,7 +513,7 @@
 			};
 			name = Debug;
 		};
-		KK0000000000000000000006 /* Release */ = {
+		A0B1C2D3E4F5060718293A50 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -538,34 +538,34 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		HH0000000000000000000001 /* Build configuration list for PBXNativeTarget "Scrib" */ = {
+		9H0I1J2K3L4M5N6O7P8Q9R0S /* Build configuration list for PBXNativeTarget "Scrib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				KK0000000000000000000003 /* Debug */,
-				KK0000000000000000000004 /* Release */,
+				A0B1C2D3E4F5060718293A4D /* Debug */,
+				A0B1C2D3E4F5060718293A4E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		HH0000000000000000000002 /* Build configuration list for PBXNativeTarget "ScribTests" */ = {
+		9H0I1J2K3L4M5N6O7P8Q9R1T /* Build configuration list for PBXNativeTarget "ScribTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				KK0000000000000000000005 /* Debug */,
-				KK0000000000000000000006 /* Release */,
+				A0B1C2D3E4F5060718293A4F /* Debug */,
+				A0B1C2D3E4F5060718293A50 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		HH0000000000000000000003 /* Build configuration list for PBXProject "Scrib" */ = {
+		9H0I1J2K3L4M5N6O7P8Q9R2U /* Build configuration list for PBXProject "Scrib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				KK0000000000000000000001 /* Debug */,
-				KK0000000000000000000002 /* Release */,
+				A0B1C2D3E4F5060718293A4B /* Debug */,
+				A0B1C2D3E4F5060718293A4C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = DD0000000000000000000001 /* Project object */;
+	rootObject = 1A2B3C4D5E6F708192A3B4C5 /* Project object */;
 }

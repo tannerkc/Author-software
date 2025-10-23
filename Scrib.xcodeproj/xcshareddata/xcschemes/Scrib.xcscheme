@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "EE0000000000000000000001"
+               BlueprintIdentifier = "2B3C4D5E6F708192A3B4C5D6"
                BuildableName = "Scrib.app"
                BlueprintName = "Scrib"
                ReferencedContainer = "container:Scrib.xcodeproj">
@@ -35,7 +35,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "EE0000000000000000000003"
+               BlueprintIdentifier = "8G9H0I1J2K3L4M5N6O7P8Q9R"
                BuildableName = "ScribTests.xctest"
                BlueprintName = "ScribTests"
                ReferencedContainer = "container:Scrib.xcodeproj">
@@ -57,7 +57,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "EE0000000000000000000001"
+            BlueprintIdentifier = "2B3C4D5E6F708192A3B4C5D6"
             BuildableName = "Scrib.app"
             BlueprintName = "Scrib"
             ReferencedContainer = "container:Scrib.xcodeproj">
@@ -74,7 +74,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "EE0000000000000000000001"
+            BlueprintIdentifier = "2B3C4D5E6F708192A3B4C5D6"
             BuildableName = "Scrib.app"
             BlueprintName = "Scrib"
             ReferencedContainer = "container:Scrib.xcodeproj">
