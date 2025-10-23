@@ -19,12 +19,6 @@ extension Color {
 
     // MARK: - Semantic Colors
 
-    /// Background color for the editor
-    static let editorBackground = Color(nsColor: .textBackgroundColor)
-
-    /// Background color for the sidebar
-    static let sidebarBackground = Color(nsColor: .controlBackgroundColor)
-
     /// Color for empty state text
     static let emptyStateText = Color.secondary
 
@@ -45,17 +39,26 @@ extension Color {
     /// Secondary text color (for metadata, captions)
     static let secondaryText = Color.secondary
 
-    /// Tertiary text color (for timestamps, subtle info)
-    static let tertiaryText = Color(nsColor: .tertiaryLabelColor)
-
-    // MARK: - UI Element Colors
-
-    /// Divider color
-    static let divider = Color(nsColor: .separatorColor)
-
     /// Selection color
     static let selection = Color.accentColor.opacity(0.2)
 }
+
+// MARK: - macOS Color Support
+#if os(macOS)
+extension Color {
+    /// Background color for the editor
+    static let editorBackground = Color(nsColor: .textBackgroundColor)
+
+    /// Background color for the sidebar
+    static let sidebarBackground = Color(nsColor: .controlBackgroundColor)
+
+    /// Tertiary text color (for timestamps, subtle info)
+    static let tertiaryText = Color(nsColor: .tertiaryLabelColor)
+
+    /// Divider color
+    static let divider = Color(nsColor: .separatorColor)
+}
+#endif
 
 // MARK: - iOS Color Support
 #if os(iOS)
