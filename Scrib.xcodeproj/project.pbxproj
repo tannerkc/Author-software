@@ -7,64 +7,64 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3D1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift */; };
-		3D1A2B3C4D5E6F7890ABCD01 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD01 /* ContentView.swift */; };
-		3D1A2B3C4D5E6F7890ABCD02 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD02 /* Book.swift */; };
-		3D1A2B3C4D5E6F7890ABCD03 /* Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD03 /* Chapter.swift */; };
-		3D1A2B3C4D5E6F7890ABCD04 /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD04 /* DataStore.swift */; };
-		3D1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift */; };
-		3D1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift */; };
-		3D1A2B3C4D5E6F7890ABCD07 /* BookListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD07 /* BookListView.swift */; };
-		3D1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift */; };
-		3D1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift */; };
-		3D1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift */; };
-		3D1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift */; };
-		3D1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift */; };
-		3D1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets */; };
-		3D1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift */; };
-		3D1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift */; };
+		A001 /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* ScribApp.swift */; };
+		A002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* ContentView.swift */; };
+		A003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B003 /* Assets.xcassets */; };
+		A004 /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* Book.swift */; };
+		A005 /* Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B005 /* Chapter.swift */; };
+		A006 /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B006 /* DataStore.swift */; };
+		A007 /* BookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B007 /* BookViewModel.swift */; };
+		A008 /* ChapterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B008 /* ChapterViewModel.swift */; };
+		A009 /* BookListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B009 /* BookListView.swift */; };
+		A010 /* ChapterListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B010 /* ChapterListView.swift */; };
+		A011 /* ChapterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B011 /* ChapterEditorView.swift */; };
+		A012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B012 /* SettingsView.swift */; };
+		A013 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B013 /* Date+Extensions.swift */; };
+		A014 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B014 /* Color+Extensions.swift */; };
+		A101 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B101 /* BookModelTests.swift */; };
+		A102 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B102 /* ChapterModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		7F8A9B0C1D2E3F4050607182 /* PBXContainerItemProxy */ = {
+		C001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 1A2B3C4D5E6F708192A3B4C5 /* Project object */;
+			containerPortal = P001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 2B3C4D5E6F708192A3B4C5D6;
+			remoteGlobalIDString = T001;
 			remoteInfo = Scrib;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2B3C4D5E6F708192A3B4C5D6 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4E1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD01 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD02 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD03 /* Chapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chapter.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD04 /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookViewModel.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterViewModel.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD07 /* BookListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookListView.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListView.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterEditorView.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
-		4E1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
-		8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B001 /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
+		B002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B004 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		B005 /* Chapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chapter.swift; sourceTree = "<group>"; };
+		B006 /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
+		B007 /* BookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookViewModel.swift; sourceTree = "<group>"; };
+		B008 /* ChapterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterViewModel.swift; sourceTree = "<group>"; };
+		B009 /* BookListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookListView.swift; sourceTree = "<group>"; };
+		B010 /* ChapterListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListView.swift; sourceTree = "<group>"; };
+		B011 /* ChapterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterEditorView.swift; sourceTree = "<group>"; };
+		B012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B013 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
+		B014 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
+		B101 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
+		B102 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
+		P001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		P002 /* ScribTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		5C6D7E8F90A1B2C3D4E5F607 /* Frameworks */ = {
+		F001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5C6D7E8F90A1B2C3D4E5F608 /* Frameworks */ = {
+		F002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -74,98 +74,98 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6D7E8F90A1B2C3D4E5F60718 = {
+		G001 = {
 			isa = PBXGroup;
 			children = (
-				6D7E8F90A1B2C3D4E5F60719 /* Scrib */,
-				6D7E8F90A1B2C3D4E5F60730 /* ScribTests */,
-				6D7E8F90A1B2C3D4E5F60740 /* Products */,
+				G002 /* Scrib */,
+				G100 /* ScribTests */,
+				G999 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60719 /* Scrib */ = {
+		G002 /* Scrib */ = {
 			isa = PBXGroup;
 			children = (
-				6D7E8F90A1B2C3D4E5F60720 /* App */,
-				6D7E8F90A1B2C3D4E5F60721 /* Models */,
-				6D7E8F90A1B2C3D4E5F60722 /* Views */,
-				6D7E8F90A1B2C3D4E5F60723 /* ViewModels */,
-				6D7E8F90A1B2C3D4E5F60724 /* Extensions */,
-				6D7E8F90A1B2C3D4E5F60725 /* Resources */,
+				G003 /* App */,
+				G004 /* Models */,
+				G005 /* Views */,
+				G006 /* ViewModels */,
+				G007 /* Extensions */,
+				G008 /* Resources */,
 			);
 			path = Scrib;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60720 /* App */ = {
+		G003 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift */,
+				B001 /* ScribApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60721 /* Models */ = {
+		G004 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCD02 /* Book.swift */,
-				4E1A2B3C4D5E6F7890ABCD03 /* Chapter.swift */,
-				4E1A2B3C4D5E6F7890ABCD04 /* DataStore.swift */,
+				B004 /* Book.swift */,
+				B005 /* Chapter.swift */,
+				B006 /* DataStore.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60722 /* Views */ = {
+		G005 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCD01 /* ContentView.swift */,
-				4E1A2B3C4D5E6F7890ABCD07 /* BookListView.swift */,
-				4E1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift */,
-				4E1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift */,
-				4E1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift */,
+				B002 /* ContentView.swift */,
+				B009 /* BookListView.swift */,
+				B010 /* ChapterListView.swift */,
+				B011 /* ChapterEditorView.swift */,
+				B012 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60723 /* ViewModels */ = {
+		G006 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift */,
-				4E1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift */,
+				B007 /* BookViewModel.swift */,
+				B008 /* ChapterViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60724 /* Extensions */ = {
+		G007 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift */,
-				4E1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift */,
+				B013 /* Date+Extensions.swift */,
+				B014 /* Color+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60725 /* Resources */ = {
+		G008 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets */,
+				B003 /* Assets.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60730 /* ScribTests */ = {
+		G100 /* ScribTests */ = {
 			isa = PBXGroup;
 			children = (
-				4E1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift */,
-				4E1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift */,
+				B101 /* BookModelTests.swift */,
+				B102 /* ChapterModelTests.swift */,
 			);
 			path = ScribTests;
 			sourceTree = "<group>";
 		};
-		6D7E8F90A1B2C3D4E5F60740 /* Products */ = {
+		G999 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2B3C4D5E6F708192A3B4C5D6 /* Scrib.app */,
-				8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests.xctest */,
+				P001 /* Scrib.app */,
+				P002 /* ScribTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -173,13 +173,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		2B3C4D5E6F708192A3B4C5D6 /* Scrib */ = {
+		T001 /* Scrib */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9H0I1J2K3L4M5N6O7P8Q9R0S /* Build configuration list for PBXNativeTarget "Scrib" */;
+			buildConfigurationList = L001 /* Build configuration list for PBXNativeTarget "Scrib" */;
 			buildPhases = (
-				5C6D7E8F90A1B2C3D4E5F607 /* Frameworks */,
-				0C1D2E3F4050617283940A5B /* Sources */,
-				0D1E2F3040506172839405BC /* Resources */,
+				S001 /* Sources */,
+				F001 /* Frameworks */,
+				R001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -187,46 +187,46 @@
 			);
 			name = Scrib;
 			productName = Scrib;
-			productReference = 2B3C4D5E6F708192A3B4C5D6 /* Scrib.app */;
+			productReference = P001 /* Scrib.app */;
 			productType = "com.apple.product-type.application";
 		};
-		8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests */ = {
+		T002 /* ScribTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9H0I1J2K3L4M5N6O7P8Q9R1T /* Build configuration list for PBXNativeTarget "ScribTests" */;
+			buildConfigurationList = L002 /* Build configuration list for PBXNativeTarget "ScribTests" */;
 			buildPhases = (
-				5C6D7E8F90A1B2C3D4E5F608 /* Frameworks */,
-				0C1D2E3F4050617283940A6C /* Sources */,
+				S002 /* Sources */,
+				F002 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				0E1F20314050617283940A6D /* PBXTargetDependency */,
+				D001 /* PBXTargetDependency */,
 			);
 			name = ScribTests;
 			productName = ScribTests;
-			productReference = 8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests.xctest */;
+			productReference = P002 /* ScribTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		1A2B3C4D5E6F708192A3B4C5 /* Project object */ = {
+		PR01 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					2B3C4D5E6F708192A3B4C5D6 = {
+					T001 = {
 						CreatedOnToolsVersion = 16.0;
 					};
-					8G9H0I1J2K3L4M5N6O7P8Q9R = {
+					T002 = {
 						CreatedOnToolsVersion = 16.0;
-						TestTargetID = 2B3C4D5E6F708192A3B4C5D6;
+						TestTargetID = T001;
 					};
 				};
 			};
-			buildConfigurationList = 9H0I1J2K3L4M5N6O7P8Q9R2U /* Build configuration list for PBXProject "Scrib" */;
+			buildConfigurationList = L003 /* Build configuration list for PBXProject "Scrib" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -234,70 +234,70 @@
 				en,
 				Base,
 			);
-			mainGroup = 6D7E8F90A1B2C3D4E5F60718;
-			productRefGroup = 6D7E8F90A1B2C3D4E5F60740 /* Products */;
+			mainGroup = G001;
+			productRefGroup = G999 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2B3C4D5E6F708192A3B4C5D6 /* Scrib */,
-				8G9H0I1J2K3L4M5N6O7P8Q9R /* ScribTests */,
+				T001 /* Scrib */,
+				T002 /* ScribTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0D1E2F3040506172839405BC /* Resources */ = {
+		R001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3D1A2B3C4D5E6F7890ABCD20 /* Assets.xcassets in Resources */,
+				A003 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0C1D2E3F4050617283940A5B /* Sources */ = {
+		S001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3D1A2B3C4D5E6F7890ABCDEF /* ScribApp.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD01 /* ContentView.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD02 /* Book.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD03 /* Chapter.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD04 /* DataStore.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD05 /* BookViewModel.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD06 /* ChapterViewModel.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD07 /* BookListView.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD08 /* ChapterListView.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD09 /* ChapterEditorView.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD10 /* SettingsView.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD11 /* Date+Extensions.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD12 /* Color+Extensions.swift in Sources */,
+				A001 /* ScribApp.swift in Sources */,
+				A002 /* ContentView.swift in Sources */,
+				A004 /* Book.swift in Sources */,
+				A005 /* Chapter.swift in Sources */,
+				A006 /* DataStore.swift in Sources */,
+				A007 /* BookViewModel.swift in Sources */,
+				A008 /* ChapterViewModel.swift in Sources */,
+				A009 /* BookListView.swift in Sources */,
+				A010 /* ChapterListView.swift in Sources */,
+				A011 /* ChapterEditorView.swift in Sources */,
+				A012 /* SettingsView.swift in Sources */,
+				A013 /* Date+Extensions.swift in Sources */,
+				A014 /* Color+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		0C1D2E3F4050617283940A6C /* Sources */ = {
+		S002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3D1A2B3C4D5E6F7890ABCD30 /* BookModelTests.swift in Sources */,
-				3D1A2B3C4D5E6F7890ABCD31 /* ChapterModelTests.swift in Sources */,
+				A101 /* BookModelTests.swift in Sources */,
+				A102 /* ChapterModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		0E1F20314050617283940A6D /* PBXTargetDependency */ = {
+		D001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 2B3C4D5E6F708192A3B4C5D6 /* Scrib */;
-			targetProxy = 7F8A9B0C1D2E3F4050607182 /* PBXContainerItemProxy */;
+			target = T001 /* Scrib */;
+			targetProxy = C001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		A0B1C2D3E4F5060718293A4B /* Debug */ = {
+		X001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -359,7 +359,7 @@
 			};
 			name = Debug;
 		};
-		A0B1C2D3E4F5060718293A4C /* Release */ = {
+		X002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -413,12 +413,11 @@
 			};
 			name = Release;
 		};
-		A0B1C2D3E4F5060718293A4D /* Debug */ = {
+		X003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -432,7 +431,6 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -452,12 +450,11 @@
 			};
 			name = Debug;
 		};
-		A0B1C2D3E4F5060718293A4E /* Release */ = {
+		X004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -471,7 +468,6 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -491,7 +487,7 @@
 			};
 			name = Release;
 		};
-		A0B1C2D3E4F5060718293A4F /* Debug */ = {
+		X005 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -513,7 +509,7 @@
 			};
 			name = Debug;
 		};
-		A0B1C2D3E4F5060718293A50 /* Release */ = {
+		X006 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -538,34 +534,34 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9H0I1J2K3L4M5N6O7P8Q9R0S /* Build configuration list for PBXNativeTarget "Scrib" */ = {
+		L001 /* Build configuration list for PBXNativeTarget "Scrib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A0B1C2D3E4F5060718293A4D /* Debug */,
-				A0B1C2D3E4F5060718293A4E /* Release */,
+				X003 /* Debug */,
+				X004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9H0I1J2K3L4M5N6O7P8Q9R1T /* Build configuration list for PBXNativeTarget "ScribTests" */ = {
+		L002 /* Build configuration list for PBXNativeTarget "ScribTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A0B1C2D3E4F5060718293A4F /* Debug */,
-				A0B1C2D3E4F5060718293A50 /* Release */,
+				X005 /* Debug */,
+				X006 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9H0I1J2K3L4M5N6O7P8Q9R2U /* Build configuration list for PBXProject "Scrib" */ = {
+		L003 /* Build configuration list for PBXProject "Scrib" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A0B1C2D3E4F5060718293A4B /* Debug */,
-				A0B1C2D3E4F5060718293A4C /* Release */,
+				X001 /* Debug */,
+				X002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 1A2B3C4D5E6F708192A3B4C5 /* Project object */;
+	rootObject = PR01 /* Project object */;
 }
