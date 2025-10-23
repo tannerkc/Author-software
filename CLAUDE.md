@@ -18,7 +18,7 @@ organization and modern SwiftUI paradigms.
 - **Design Guidelines:** Apple HIG 2025 + SwiftUI Best Practices
 - **Performance Goals:** Maintain 120Hz scroll performance across 10,000+ chapters; zero dropped frames (per WWDC25 SwiftUI List benchmarks)
 - **Architecture:** Model-View-ViewModel (MVVM) with scene isolation
-- **Storage:** CloudKit (primary), CoreData (local fallback)
+- **Storage:** CloudKit (primary), SwiftData (local fallback)
 
 ---
 
