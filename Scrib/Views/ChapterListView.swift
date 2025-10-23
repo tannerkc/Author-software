@@ -298,7 +298,9 @@ struct NewChapterSheet: View {
                 }
             }
             .navigationTitle("New Chapter")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

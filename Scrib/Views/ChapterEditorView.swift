@@ -53,7 +53,11 @@ struct ChapterEditorView: View {
                     viewModel?.updateChapterContent(chapter, content: newValue)
                 }
                 .scrollContentBackground(.hidden)
+                #if os(macOS)
                 .background(Color(nsColor: .textBackgroundColor))
+                #else
+                .background(Color(.systemBackground))
+                #endif
 
             Divider()
 
@@ -166,14 +170,20 @@ struct ChapterEditorView: View {
                 .font(.caption)
                 .foregroundStyle(.green)
             } else {
+                #if os(macOS)
                 Label("Auto-save enabled", systemImage: "icloud")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                #endif
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
+        #if os(macOS)
         .background(Color(nsColor: .controlBackgroundColor))
+        #else
+        .background(Color(.systemGroupedBackground))
+        #endif
     }
 
     // MARK: - Actions
@@ -189,97 +199,6 @@ struct ChapterEditorView: View {
         isEditingTitle = false
     }
 }
-
-// MARK: - iOS-specific Implementation
-
-#if os(iOS)
-extension ChapterEditorView {
-    private var titleBar: some View {
-        HStack {
-            if isEditingTitle {
-                TextField("Chapter Title", text: $titleText)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .textFieldStyle(.plain)
-                    .onSubmit {
-                        saveTitle()
-                    }
-
-                Button {
-                    saveTitle()
-                } label: {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-
-                Button {
-                    titleText = chapter.title
-                    isEditingTitle = false
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.red)
-                }
-            } else {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(chapter.title)
-                        .font(.title2)
-                        .fontWeight(.bold)
-
-                    if let book = chapter.book {
-                        Text(book.title)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                Button {
-                    isEditingTitle = true
-                    titleText = chapter.title
-                } label: {
-                    Image(systemName: "pencil.circle")
-                        .font(.title3)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding()
-    }
-
-    private var statusBar: some View {
-        HStack {
-            // Word count
-            Label("\(chapter.wordCount) words", systemImage: "doc.text")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Divider()
-                .frame(height: 12)
-
-            // Character count
-            Label("\(chapter.characterCount) characters", systemImage: "textformat.abc")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            // Last saved indicator
-            if let lastSaveTime = viewModel?.lastSaveTime {
-                Label(
-                    "Saved \(lastSaveTime, style: .relative)",
-                    systemImage: "checkmark.circle.fill"
-                )
-                .font(.caption)
-                .foregroundStyle(.green)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(Color(.systemGroupedBackground))
-    }
-}
-#endif
 
 // MARK: - Previews
 #Preview("With Content") {

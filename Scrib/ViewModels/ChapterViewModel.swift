@@ -216,14 +216,16 @@ final class ChapterViewModel {
 
         // Schedule new auto-save task
         autoSaveTask = Task { [weak self] in
+            guard let self else { return }
+
             // Wait for the debounce delay
-            try? await Task.sleep(for: .seconds(autoSaveDelay))
+            try? await Task.sleep(for: .seconds(self.autoSaveDelay))
 
             // Check if task was cancelled
             guard !Task.isCancelled else { return }
 
             // Perform the save
-            await self?.performAutoSave(for: chapter)
+            await self.performAutoSave(for: chapter)
         }
     }
 
