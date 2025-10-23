@@ -1,7 +1,7 @@
-# Project: BookNotes — SwiftUI Book Writing App (iOS 26 & macOS 26)
+# Project: Scrib — SwiftUI Book Writing App (iOS 26 & macOS 26)
 
 ## Overview
-BookNotes is a cross-platform SwiftUI app for iOS and macOS that reimagines Apple Notes as a book-authoring environment.
+Scrib is a cross-platform SwiftUI app for iOS and macOS that reimagines Apple Notes as a book-authoring environment.
 Instead of folders and notes, the app uses **Books** (collections) and **Chapters** (entries). It blends minimalist design
 with robust manuscript management tools, offering distraction-free writing, chapter organization, live syncing, and seamless
 cross-device editing.
