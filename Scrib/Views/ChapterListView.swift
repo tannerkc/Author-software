@@ -90,6 +90,7 @@ struct ChapterListView: View {
             }
         }
         .scrollContentBackground(.hidden) // iOS 26: Enable Liquid Glass transparency
+        .searchable(text: $searchText, prompt: "Search Chapters")
         .navigationTitle(book.title)
         .toolbar {
             #if os(iOS)
@@ -140,16 +141,12 @@ struct ChapterListView: View {
                 }
             }
 
-            // Bottom toolbar: Independent search field and compose button
-            ToolbarItemGroup(placement: .bottomBar) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
+            // Bottom toolbar: Native search field and compose button
+            DefaultToolbarItem(kind: .search, placement: .bottomBar)
 
-                TextField("Search", text: $searchText)
-                    .textFieldStyle(.plain)
+            ToolbarSpacer(.flexible, placement: .bottomBar)
 
-                Spacer()
-
+            ToolbarItem(placement: .bottomBar) {
                 Button {
                     showingNewChapterSheet = true
                 } label: {
