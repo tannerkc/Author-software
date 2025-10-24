@@ -303,68 +303,33 @@ private struct ColorPickerView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // MARK: - Quick Color Palette
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Quick Colors")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 20)
-
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 6),
-                        spacing: 12
-                    ) {
-                        ForEach(quickColors, id: \.self) { color in
+        VStack(spacing: 16) {
+            // MARK: - Quick Color Palette
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 6),
+                spacing: 12
+            ) {
+                ForEach(quickColors, id: \.self) { color in
+                    Circle()
+                        .fill(color)
+                        .frame(width: 44, height: 44)
+                        .overlay(
                             Circle()
-                                .fill(color)
-                                .frame(width: 44, height: 44)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            selectedColor == color ? Color.accentColor : Color.clear,
-                                            lineWidth: 3
-                                        )
+                                .strokeBorder(
+                                    selectedColor == color ? Color.accentColor : Color.clear,
+                                    lineWidth: 3
                                 )
-                                .onTapGesture {
-                                    selectedColor = color
-                                    onColorSelected(color)
-                                }
+                        )
+                        .onTapGesture {
+                            selectedColor = color
+                            onColorSelected(color)
                         }
-                    }
-                    .padding(.horizontal, 20)
                 }
-                .padding(.top, 8)
-
-                Divider()
-                    .padding(.horizontal, 20)
-
-                // MARK: - Custom Color Picker
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Custom Color")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 20)
-
-                    ColorPicker(
-                        "Choose a custom color",
-                        selection: Binding(
-                            get: { selectedColor },
-                            set: { newColor in
-                                selectedColor = newColor
-                                onColorSelected(newColor)
-                            }
-                        ),
-                        supportsOpacity: false
-                    )
-                    .padding(.horizontal, 20)
-                }
-
-                Spacer(minLength: 40)
             }
-            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
         }
+        .frame(maxHeight: .infinity)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemBackground))
