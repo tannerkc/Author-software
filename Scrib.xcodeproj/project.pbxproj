@@ -51,6 +51,8 @@
 
 /* Begin PBXFileReference section */
 		6C17D2602EAAA48600EA2C6B /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		6C17D2642EAC028400EA2C6B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6C17D2652EAC02A000EA2C6B /* Scrib.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Scrib.entitlements; sourceTree = "<group>"; };
 		B001 /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
 		B002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -115,6 +117,8 @@
 		G002 /* Scrib */ = {
 			isa = PBXGroup;
 			children = (
+				6C17D2652EAC02A000EA2C6B /* Scrib.entitlements */,
+				6C17D2642EAC028400EA2C6B /* Info.plist */,
 				6C17D2602EAAA48600EA2C6B /* AppIcon.icon */,
 				G003 /* App */,
 				G004 /* Models */,
@@ -509,12 +513,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Scrib/Scrib.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BRC59YVWTB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Scrib/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Scrib;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -547,12 +553,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Scrib/Scrib.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BRC59YVWTB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Scrib/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Scrib;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
