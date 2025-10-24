@@ -296,6 +296,46 @@ extension RichTextEditor {
         return string.paragraphRange(for: selectedRange)
     }
 
+    /// Apply indentation to the specified range (increase indent level)
+    /// - Parameters:
+    ///   - attributedText: The mutable attributed string to modify
+    ///   - range: The range to apply indentation (should be paragraph range)
+    ///   - indentIncrement: The amount to increase indent (default: 20pt, matching Apple Notes)
+    static func applyIndent(to attributedText: NSMutableAttributedString, range: NSRange, indentIncrement: CGFloat = 20) {
+        guard range.location != NSNotFound && range.length > 0 else { return }
+
+        // Get or create paragraph style
+        let existingStyle = attributedText.attribute(.paragraphStyle, at: range.location, effectiveRange: nil) as? NSParagraphStyle
+        let paragraphStyle = (existingStyle?.mutableCopy() as? NSMutableParagraphStyle) ?? NSMutableParagraphStyle()
+
+        // Increase indentation
+        paragraphStyle.firstLineHeadIndent += indentIncrement
+        paragraphStyle.headIndent += indentIncrement
+
+        // Apply the updated paragraph style
+        attributedText.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+    }
+
+    /// Remove indentation from the specified range (decrease indent level)
+    /// - Parameters:
+    ///   - attributedText: The mutable attributed string to modify
+    ///   - range: The range to remove indentation from (should be paragraph range)
+    ///   - indentDecrement: The amount to decrease indent (default: 20pt, matching Apple Notes)
+    static func applyOutdent(to attributedText: NSMutableAttributedString, range: NSRange, indentDecrement: CGFloat = 20) {
+        guard range.location != NSNotFound && range.length > 0 else { return }
+
+        // Get existing paragraph style
+        let existingStyle = attributedText.attribute(.paragraphStyle, at: range.location, effectiveRange: nil) as? NSParagraphStyle
+        let paragraphStyle = (existingStyle?.mutableCopy() as? NSMutableParagraphStyle) ?? NSMutableParagraphStyle()
+
+        // Decrease indentation (but don't go below 0)
+        paragraphStyle.firstLineHeadIndent = max(0, paragraphStyle.firstLineHeadIndent - indentDecrement)
+        paragraphStyle.headIndent = max(0, paragraphStyle.headIndent - indentDecrement)
+
+        // Apply the updated paragraph style
+        attributedText.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+    }
+
     /// Detect which text formats are currently active at the given selection
     /// Returns a set of active formats (bold, italic, underline, etc.)
     static func detectActiveFormats(in attributedText: NSAttributedString, at range: NSRange) -> Set<TextFormat> {
@@ -363,6 +403,25 @@ extension RichTextEditor {
         if let foregroundColor = attributes[.foregroundColor] as? UIColor,
            foregroundColor != .label {
             activeFormats.insert(.textColor(Color(foregroundColor)))
+        }
+
+        // Check for list formatting by examining the current paragraph
+        let paragraphRange = paragraphRange(for: range, in: attributedText)
+        if paragraphRange.location != NSNotFound && paragraphRange.length > 0 {
+            let paragraphText = (attributedText.string as NSString).substring(with: paragraphRange)
+
+            // Detect bullet list: starts with "• "
+            if paragraphText.hasPrefix("• ") {
+                activeFormats.insert(.bulletList)
+            }
+            // Detect numbered list: starts with number pattern like "1. ", "2. ", etc.
+            else if paragraphText.range(of: "^\\d+\\.\\s", options: .regularExpression) != nil {
+                activeFormats.insert(.numberedList)
+            }
+            // Detect checklist: starts with "☐ " or "☑ "
+            else if paragraphText.hasPrefix("☐ ") || paragraphText.hasPrefix("☑ ") {
+                activeFormats.insert(.checklist)
+            }
         }
 
         return activeFormats

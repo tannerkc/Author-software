@@ -317,21 +317,72 @@ struct ChapterEditorView: View {
             }
 
         case .bulletList, .numberedList, .checklist:
-            // For lists, insert at line start
+            // Get the current paragraph range
             let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
-            let listMarker: String
+            guard paragraphRange.location != NSNotFound && paragraphRange.length > 0 else { break }
+
+            let paragraphText = (attributedText.string as NSString).substring(with: paragraphRange)
+
+            // Determine the new list marker
+            let newMarker: String
             switch format {
-            case .bulletList: listMarker = "• "
-            case .numberedList: listMarker = "1. "
-            case .checklist: listMarker = "☐ "
-            default: listMarker = ""
+            case .bulletList: newMarker = "• "
+            case .numberedList: newMarker = "1. "
+            case .checklist: newMarker = "☐ "
+            default: newMarker = ""
             }
 
-            mutableText.insert(NSAttributedString(string: listMarker), at: paragraphRange.location)
+            // Check if the same list type is already active (toggle off)
+            let isAlreadyActive = activeFormats.contains(format)
 
-        case .indent, .outdent:
-            // TODO: Implement indentation
-            print("Indent/Outdent not yet implemented")
+            // Detect any existing list marker at the start of the paragraph
+            var existingMarkerRange: NSRange?
+
+            if paragraphText.hasPrefix("• ") {
+                existingMarkerRange = NSRange(location: paragraphRange.location, length: 2)
+            } else if let match = paragraphText.range(of: "^\\d+\\.\\s", options: .regularExpression) {
+                let length = paragraphText.distance(from: paragraphText.startIndex, to: match.upperBound)
+                existingMarkerRange = NSRange(location: paragraphRange.location, length: length)
+            } else if paragraphText.hasPrefix("☐ ") || paragraphText.hasPrefix("☑ ") {
+                existingMarkerRange = NSRange(location: paragraphRange.location, length: 2)
+            }
+
+            // Apply list formatting logic
+            if isAlreadyActive {
+                // Toggle OFF: Remove the existing marker
+                if let markerRange = existingMarkerRange {
+                    mutableText.deleteCharacters(in: markerRange)
+                }
+            } else if let markerRange = existingMarkerRange {
+                // Switch list types: Replace the existing marker
+                mutableText.replaceCharacters(in: markerRange, with: "")
+
+                // Insert new marker with proper attributes
+                let markerAttributes: [NSAttributedString.Key: Any] = [
+                    .foregroundColor: UIColor.label, // Adapts to light/dark mode
+                    .font: UIFont.systemFont(ofSize: 17)
+                ]
+                let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
+                mutableText.insert(attributedMarker, at: paragraphRange.location)
+            } else {
+                // No existing marker: Insert new marker with proper attributes
+                let markerAttributes: [NSAttributedString.Key: Any] = [
+                    .foregroundColor: UIColor.label, // Adapts to light/dark mode
+                    .font: UIFont.systemFont(ofSize: 17)
+                ]
+                let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
+                mutableText.insert(attributedMarker, at: paragraphRange.location)
+            }
+
+        case .indent:
+            // Apply indentation to current paragraph or selected paragraphs
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            RichTextEditor.applyIndent(to: mutableText, range: paragraphRange)
+
+        case .outdent:
+            // Remove indentation from current paragraph or selected paragraphs
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            RichTextEditor.applyOutdent(to: mutableText, range: paragraphRange)
         }
 
         // Update the attributed text
