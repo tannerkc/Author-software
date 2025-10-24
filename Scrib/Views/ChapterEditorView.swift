@@ -296,8 +296,9 @@ struct ChapterEditorView: View {
                 targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
             }
 
-            // Check if format is currently active
-            let isActive = activeFormats.contains(where: { existingFormat in
+            // CRITICAL: Detect formats FRESH from current text - don't trust stale activeFormats state
+            let currentFormats = RichTextEditor.detectActiveFormats(in: attributedText, at: textSelection)
+            let isActive = currentFormats.contains(where: { existingFormat in
                 // For formats with associated values (colors), compare the base type
                 switch (format, existingFormat) {
                 case (.bold, .bold), (.italic, .italic), (.underline, .underline), (.strikethrough, .strikethrough):
@@ -332,29 +333,39 @@ struct ChapterEditorView: View {
             default: newMarker = ""
             }
 
-            // Check if the same list type is already active (toggle off)
-            let isAlreadyActive = activeFormats.contains(format)
-
-            // Detect any existing list marker at the start of the paragraph
+            // Detect any existing list marker at the start of the paragraph (FRESH detection)
             var existingMarkerRange: NSRange?
+            var existingMarkerType: TextFormat?
 
             if paragraphText.hasPrefix("• ") {
                 existingMarkerRange = NSRange(location: paragraphRange.location, length: 2)
+                existingMarkerType = .bulletList
             } else if let match = paragraphText.range(of: "^\\d+\\.\\s", options: .regularExpression) {
                 let length = paragraphText.distance(from: paragraphText.startIndex, to: match.upperBound)
                 existingMarkerRange = NSRange(location: paragraphRange.location, length: length)
+                existingMarkerType = .numberedList
             } else if paragraphText.hasPrefix("☐ ") || paragraphText.hasPrefix("☑ ") {
                 existingMarkerRange = NSRange(location: paragraphRange.location, length: 2)
+                existingMarkerType = .checklist
             }
+
+            // CRITICAL: Use FRESH detection - check if same list type is already present
+            let isAlreadyActive = (existingMarkerType == format)
+
+            // Track text length changes for selection adjustment
+            var selectionDelta = 0
 
             // Apply list formatting logic
             if isAlreadyActive {
                 // Toggle OFF: Remove the existing marker
                 if let markerRange = existingMarkerRange {
                     mutableText.deleteCharacters(in: markerRange)
+                    // Adjust selection: text was deleted
+                    selectionDelta = -markerRange.length
                 }
             } else if let markerRange = existingMarkerRange {
                 // Switch list types: Replace the existing marker
+                let oldMarkerLength = markerRange.length
                 mutableText.replaceCharacters(in: markerRange, with: "")
 
                 // Insert new marker with proper attributes
@@ -364,6 +375,9 @@ struct ChapterEditorView: View {
                 ]
                 let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
                 mutableText.insert(attributedMarker, at: paragraphRange.location)
+
+                // Adjust selection: old marker removed, new marker added
+                selectionDelta = newMarker.count - oldMarkerLength
             } else {
                 // No existing marker: Insert new marker with proper attributes
                 let markerAttributes: [NSAttributedString.Key: Any] = [
@@ -372,6 +386,18 @@ struct ChapterEditorView: View {
                 ]
                 let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
                 mutableText.insert(attributedMarker, at: paragraphRange.location)
+
+                // Adjust selection: text was inserted
+                selectionDelta = newMarker.count
+            }
+
+            // CRITICAL: Adjust textSelection to account for inserted/deleted characters
+            // Only adjust if cursor is within or after the affected paragraph
+            if textSelection.location >= paragraphRange.location {
+                textSelection = NSRange(
+                    location: max(paragraphRange.location, textSelection.location + selectionDelta),
+                    length: textSelection.length
+                )
             }
 
         case .indent:
@@ -387,6 +413,11 @@ struct ChapterEditorView: View {
 
         // Update the attributed text
         attributedText = mutableText
+
+        // CRITICAL: Synchronously update activeFormats to prevent UI state divergence
+        // We CANNOT rely on textViewDidChangeSelection callback - it's unreliable
+        // This ensures the format menu buttons immediately reflect the actual text state
+        activeFormats = RichTextEditor.detectActiveFormats(in: mutableText, at: textSelection)
     }
 
     // MARK: - Chapter Loading
