@@ -272,6 +272,10 @@ struct ChapterEditorView: View {
     private func handleTextFormat(_ format: TextFormat) {
         let mutableText = NSMutableAttributedString(attributedString: attributedText)
 
+        // Track selection adjustment for operations that insert/delete text
+        // Will be applied AFTER attributedText update to prevent restoration conflicts
+        var selectionAdjustment: (paragraphLocation: Int, delta: Int)? = nil
+
         // Determine range to apply formatting
         var targetRange: NSRange
 
@@ -391,14 +395,9 @@ struct ChapterEditorView: View {
                 selectionDelta = newMarker.count
             }
 
-            // CRITICAL: Adjust textSelection to account for inserted/deleted characters
-            // Only adjust if cursor is within or after the affected paragraph
-            if textSelection.location >= paragraphRange.location {
-                textSelection = NSRange(
-                    location: max(paragraphRange.location, textSelection.location + selectionDelta),
-                    length: textSelection.length
-                )
-            }
+            // Store selection adjustment to apply AFTER text update
+            // This prevents the RichTextEditor's restoration logic from overwriting our adjustment
+            selectionAdjustment = (paragraphRange.location, selectionDelta)
 
         case .indent:
             // Apply indentation to current paragraph or selected paragraphs
@@ -413,6 +412,16 @@ struct ChapterEditorView: View {
 
         // Update the attributed text
         attributedText = mutableText
+
+        // Apply selection adjustment if needed (e.g., after list marker insertion/deletion)
+        // This happens AFTER text update to prevent RichTextEditor restoration conflicts
+        if let adjustment = selectionAdjustment,
+           textSelection.location >= adjustment.paragraphLocation {
+            textSelection = NSRange(
+                location: max(adjustment.paragraphLocation, textSelection.location + adjustment.delta),
+                length: textSelection.length
+            )
+        }
 
         // CRITICAL: Synchronously update activeFormats to prevent UI state divergence
         // We CANNOT rely on textViewDidChangeSelection callback - it's unreliable

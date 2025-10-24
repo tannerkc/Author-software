@@ -57,10 +57,24 @@ struct RichTextEditor: UIViewRepresentable {
             textView.attributedText = attributedText
             context.coordinator.lastKnownText = attributedText.string
 
-            // Restore selection if valid
-            if oldSelectedRange.location != NSNotFound &&
-               oldSelectedRange.location <= textView.attributedText.length {
-                textView.selectedRange = oldSelectedRange
+            // CRITICAL: Check if selectedRange binding was updated programmatically
+            // If binding differs from old UITextView position, use binding value (cursor should move)
+            // Otherwise, restore old position to keep cursor stable during external changes
+            if selectedRange.location != oldSelectedRange.location ||
+               selectedRange.length != oldSelectedRange.length {
+                // Binding was updated programmatically - use new value
+                // This allows cursor to move when list markers are inserted/deleted
+                if selectedRange.location != NSNotFound &&
+                   selectedRange.location <= textView.attributedText.length {
+                    textView.selectedRange = selectedRange
+                }
+            } else {
+                // No programmatic update - restore old position for stability
+                // This keeps cursor in place during normal text/formatting changes
+                if oldSelectedRange.location != NSNotFound &&
+                   oldSelectedRange.location <= textView.attributedText.length {
+                    textView.selectedRange = oldSelectedRange
+                }
             }
 
             // Only manage focus for text content changes (switching chapters)
