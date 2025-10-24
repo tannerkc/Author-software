@@ -28,6 +28,15 @@ struct RichTextEditor: UIViewRepresentable {
     /// When false, users can still select text and move cursor
     var isEditable: Bool = true
 
+    /// Whether to hide the keyboard using custom inputView
+    /// When true, keyboard is hidden but text view remains fully interactive
+    /// (cursor visible, can be moved, text can be selected)
+    var shouldHideKeyboard: Bool = false
+
+    /// Callback for reporting current text attributes at selection
+    /// Called whenever the selection changes to update format button states
+    var onAttributesChanged: ((Set<TextFormat>) -> Void)? = nil
+
     func makeUIView(context: Context) -> UITextView {
         // Return the coordinator's persistent text view instance
         // This ensures the same UITextView is reused across SwiftUI updates
@@ -36,22 +45,29 @@ struct RichTextEditor: UIViewRepresentable {
     }
 
     func updateUIView(_ textView: UITextView, context: Context) {
-        // CRITICAL: Update coordinator's parent reference to maintain fresh bindings
-        // This ensures the coordinator always has access to the current binding values
-        context.coordinator.parent = self
+        // Detect if attributed text changed (text content OR formatting attributes)
+        // Uses NSAttributedString.isEqual which compares both text and attributes
+        let attributedTextChanged = !textView.attributedText.isEqual(to: attributedText)
 
-        // Only update text if it changed externally (not from user typing)
-        // Compare string content to avoid unnecessary UITextView updates
-        let textChanged = textView.attributedText.string != attributedText.string
-
-        if textChanged && !context.coordinator.isUpdatingFromUser {
+        // Update UITextView when:
+        // 1. Attributed text changed (text or formatting)
+        // 2. NOT from user typing (prevents circular updates)
+        if attributedTextChanged && !context.coordinator.isUpdatingFromUser {
             let oldSelectedRange = textView.selectedRange
             textView.attributedText = attributedText
+            context.coordinator.lastKnownText = attributedText.string
 
             // Restore selection if valid
             if oldSelectedRange.location != NSNotFound &&
                oldSelectedRange.location <= textView.attributedText.length {
                 textView.selectedRange = oldSelectedRange
+            }
+
+            // Only manage focus for text content changes (switching chapters)
+            // Don't steal focus for formatting changes
+            let textContentChanged = textView.attributedText.string != context.coordinator.lastKnownText
+            if textContentChanged && isFocused.wrappedValue && !textView.isFirstResponder {
+                textView.becomeFirstResponder()
             }
         }
 
@@ -60,12 +76,22 @@ struct RichTextEditor: UIViewRepresentable {
             textView.isEditable = isEditable
         }
 
-        // Update focus state
-        if isFocused.wrappedValue && !textView.isFirstResponder {
-            textView.becomeFirstResponder()
-        } else if !isFocused.wrappedValue && textView.isFirstResponder {
-            textView.resignFirstResponder()
+        // CRITICAL: Use custom inputView to hide keyboard while keeping text view interactive
+        // This is the iOS best practice for hiding keyboard without making view non-interactive
+        if shouldHideKeyboard && textView.inputView == nil {
+            // Hide keyboard by setting empty input view
+            // Text view remains first responder, cursor visible, fully interactive
+            textView.inputView = UIView() // Empty view = no keyboard
+            textView.reloadInputViews()
+        } else if !shouldHideKeyboard && textView.inputView != nil {
+            // Restore keyboard by removing custom input view
+            textView.inputView = nil
+            textView.reloadInputViews()
         }
+
+        // CRITICAL: Do NOT manage focus during normal typing
+        // This was causing the keyboard to dismiss on every keystroke
+        // Focus should only be managed during external changes (above)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -77,6 +103,10 @@ struct RichTextEditor: UIViewRepresentable {
     class Coordinator: NSObject, UITextViewDelegate {
         var parent: RichTextEditor
         var isUpdatingFromUser = false
+
+        /// Cache of the last text content we know about
+        /// Used to prevent circular updates and detect genuine external changes
+        var lastKnownText = ""
 
         /// Persistent UITextView instance (Malcolm Hall pattern)
         /// This ensures the same view is reused across SwiftUI updates
@@ -103,6 +133,8 @@ struct RichTextEditor: UIViewRepresentable {
 
         init(_ parent: RichTextEditor) {
             self.parent = parent
+            // Initialize with current text to avoid false external change detection
+            self.lastKnownText = parent.attributedText.string
         }
 
         /// Default typing attributes for body text
@@ -114,39 +146,44 @@ struct RichTextEditor: UIViewRepresentable {
         }
 
         func textViewDidChange(_ textView: UITextView) {
-            // Flag to prevent updateUIView from interfering during user typing
+            // Cache the current text to prevent circular updates
+            lastKnownText = textView.attributedText.string
+
+            // Mark that we're updating from user input
+            // This prevents updateUIView from overwriting the text
             isUpdatingFromUser = true
 
-            // Use asynchronous state updates (Chris Eidhof pattern)
-            // This prevents "modifying state during view update" warnings
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
+            // Update binding synchronously
+            // The parent's .onChange will handle debounced saving
+            parent.attributedText = textView.attributedText
 
-                // Update binding only - parent will handle save via .onChange modifier
-                self.parent.attributedText = textView.attributedText
-
-                // Reset flag after update cycle completes
-                self.isUpdatingFromUser = false
-            }
+            // Reset flag immediately after update
+            // This is safe because updateUIView checks lastKnownText as well
+            isUpdatingFromUser = false
         }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
-            // Update selected range asynchronously
-            DispatchQueue.main.async { [weak self] in
-                self?.parent.selectedRange = textView.selectedRange
+            // Update selected range synchronously
+            parent.selectedRange = textView.selectedRange
+
+            // Report current text attributes at selection for format button states
+            if let callback = parent.onAttributesChanged {
+                let activeFormats = RichTextEditor.detectActiveFormats(
+                    in: textView.attributedText,
+                    at: textView.selectedRange
+                )
+                callback(activeFormats)
             }
         }
 
         func textViewDidBeginEditing(_ textView: UITextView) {
-            DispatchQueue.main.async { [weak self] in
-                self?.parent.isFocused.wrappedValue = true
-            }
+            // Update focus state when editing begins
+            parent.isFocused.wrappedValue = true
         }
 
         func textViewDidEndEditing(_ textView: UITextView) {
-            DispatchQueue.main.async { [weak self] in
-                self?.parent.isFocused.wrappedValue = false
-            }
+            // Update focus state when editing ends
+            parent.isFocused.wrappedValue = false
         }
     }
 }
@@ -213,10 +250,122 @@ extension RichTextEditor {
         }
     }
 
+    /// Remove character formatting (toggle off)
+    static func removeCharacterFormat(_ format: TextFormat, from attributedText: NSMutableAttributedString, range: NSRange) {
+        guard range.length > 0 else { return }
+
+        switch format {
+        case .bold:
+            // Remove bold trait from font
+            attributedText.enumerateAttribute(.font, in: range) { value, subrange, _ in
+                if let currentFont = value as? UIFont {
+                    let regularFont = currentFont.removingSymbolicTraits(.traitBold) ?? currentFont
+                    attributedText.addAttribute(.font, value: regularFont, range: subrange)
+                }
+            }
+
+        case .italic:
+            attributedText.enumerateAttribute(.font, in: range) { value, subrange, _ in
+                if let currentFont = value as? UIFont {
+                    let regularFont = currentFont.removingSymbolicTraits(.traitItalic) ?? currentFont
+                    attributedText.addAttribute(.font, value: regularFont, range: subrange)
+                }
+            }
+
+        case .underline:
+            attributedText.removeAttribute(.underlineStyle, range: range)
+
+        case .strikethrough:
+            attributedText.removeAttribute(.strikethroughStyle, range: range)
+
+        case .highlight:
+            attributedText.removeAttribute(.backgroundColor, range: range)
+
+        case .textColor:
+            // Reset to default label color
+            attributedText.addAttribute(.foregroundColor, value: UIColor.label, range: range)
+
+        default:
+            break
+        }
+    }
+
     /// Get the range of the current paragraph (line) containing the cursor
     static func paragraphRange(for selectedRange: NSRange, in text: NSAttributedString) -> NSRange {
         let string = text.string as NSString
         return string.paragraphRange(for: selectedRange)
+    }
+
+    /// Detect which text formats are currently active at the given selection
+    /// Returns a set of active formats (bold, italic, underline, etc.)
+    static func detectActiveFormats(in attributedText: NSAttributedString, at range: NSRange) -> Set<TextFormat> {
+        var activeFormats = Set<TextFormat>()
+
+        // Handle empty text
+        guard attributedText.length > 0 else {
+            return activeFormats
+        }
+
+        // Determine the position to check attributes
+        // For a selection, check the start; for a cursor, check the character before
+        let checkLocation: Int
+        if range.length > 0 {
+            // Selection: check attributes at the start of selection
+            checkLocation = range.location
+        } else if range.location > 0 {
+            // Cursor: check attributes of character before cursor
+            checkLocation = range.location - 1
+        } else {
+            // At the very beginning
+            checkLocation = 0
+        }
+
+        // Ensure valid location
+        guard checkLocation >= 0 && checkLocation < attributedText.length else {
+            return activeFormats
+        }
+
+        // Get attributes at the location
+        let attributes = attributedText.attributes(at: checkLocation, effectiveRange: nil)
+
+        // Check for font traits (bold, italic)
+        if let font = attributes[.font] as? UIFont {
+            let traits = font.fontDescriptor.symbolicTraits
+
+            if traits.contains(.traitBold) {
+                activeFormats.insert(.bold)
+            }
+
+            if traits.contains(.traitItalic) {
+                activeFormats.insert(.italic)
+            }
+        }
+
+        // Check for underline
+        if let underlineStyle = attributes[.underlineStyle] as? Int,
+           underlineStyle > 0 {
+            activeFormats.insert(.underline)
+        }
+
+        // Check for strikethrough
+        if let strikethroughStyle = attributes[.strikethroughStyle] as? Int,
+           strikethroughStyle > 0 {
+            activeFormats.insert(.strikethrough)
+        }
+
+        // Check for background color (highlight)
+        if let backgroundColor = attributes[.backgroundColor] as? UIColor,
+           backgroundColor != .clear && backgroundColor.cgColor.alpha > 0 {
+            activeFormats.insert(.highlight(Color(backgroundColor)))
+        }
+
+        // Check for text color
+        if let foregroundColor = attributes[.foregroundColor] as? UIColor,
+           foregroundColor != .label {
+            activeFormats.insert(.textColor(Color(foregroundColor)))
+        }
+
+        return activeFormats
     }
 }
 
@@ -226,6 +375,17 @@ extension UIFont {
     func addingSymbolicTraits(_ traits: UIFontDescriptor.SymbolicTraits) -> UIFont? {
         var symbolicTraits = fontDescriptor.symbolicTraits
         symbolicTraits.insert(traits)
+
+        guard let descriptor = fontDescriptor.withSymbolicTraits(symbolicTraits) else {
+            return nil
+        }
+
+        return UIFont(descriptor: descriptor, size: pointSize)
+    }
+
+    func removingSymbolicTraits(_ traits: UIFontDescriptor.SymbolicTraits) -> UIFont? {
+        var symbolicTraits = fontDescriptor.symbolicTraits
+        symbolicTraits.remove(traits)
 
         guard let descriptor = fontDescriptor.withSymbolicTraits(symbolicTraits) else {
             return nil

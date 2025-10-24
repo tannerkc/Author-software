@@ -198,11 +198,76 @@ enum TextStyle: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// Text formatting actions
-enum TextFormat {
+enum TextFormat: Hashable, Equatable {
     case style(TextStyle)
     case bold, italic, underline, strikethrough
     case highlight(Color)
     case textColor(Color)
     case bulletList, numberedList, checklist
     case indent, outdent
+
+    // Equatable implementation for Color comparison
+    static func == (lhs: TextFormat, rhs: TextFormat) -> Bool {
+        switch (lhs, rhs) {
+        case (.style(let l), .style(let r)):
+            return l == r
+        case (.bold, .bold), (.italic, .italic), (.underline, .underline), (.strikethrough, .strikethrough):
+            return true
+        case (.highlight(let l), .highlight(let r)):
+            return l == r
+        case (.textColor(let l), .textColor(let r)):
+            return l == r
+        case (.bulletList, .bulletList), (.numberedList, .numberedList), (.checklist, .checklist):
+            return true
+        case (.indent, .indent), (.outdent, .outdent):
+            return true
+        default:
+            return false
+        }
+    }
+
+    // Hashable implementation
+    func hash(into hasher: inout Hasher) {
+        switch self {
+        case .style(let style):
+            hasher.combine("style")
+            hasher.combine(style)
+        case .bold:
+            hasher.combine("bold")
+        case .italic:
+            hasher.combine("italic")
+        case .underline:
+            hasher.combine("underline")
+        case .strikethrough:
+            hasher.combine("strikethrough")
+        case .highlight(let color):
+            hasher.combine("highlight")
+            hasher.combine(color)
+        case .textColor(let color):
+            hasher.combine("textColor")
+            hasher.combine(color)
+        case .bulletList:
+            hasher.combine("bulletList")
+        case .numberedList:
+            hasher.combine("numberedList")
+        case .checklist:
+            hasher.combine("checklist")
+        case .indent:
+            hasher.combine("indent")
+        case .outdent:
+            hasher.combine("outdent")
+        }
+    }
+
+    /// Simple format types without associated values (for Set membership checking)
+    var baseFormat: TextFormat {
+        switch self {
+        case .highlight:
+            return .highlight(.yellow) // Default for comparison
+        case .textColor:
+            return .textColor(.primary) // Default for comparison
+        default:
+            return self
+        }
+    }
 }

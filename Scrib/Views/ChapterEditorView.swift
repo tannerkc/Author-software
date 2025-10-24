@@ -50,6 +50,9 @@ struct ChapterEditorView: View {
     /// Text formatting state
     @State private var currentTextStyle: TextStyle = .body
 
+    /// Currently active text formats at cursor/selection (for format menu button states)
+    @State private var activeFormats: Set<TextFormat> = []
+
     /// Simulated selected text for sheets (will be enhanced with actual selection)
     @State private var currentSelection = ""
 
@@ -67,7 +70,12 @@ struct ChapterEditorView: View {
                 attributedText: $attributedText,
                 selectedRange: $textSelection,
                 isFocused: $isEditorFocused,
-                isEditable: !showingFormatMenu // Allow selection but prevent typing while format menu is open
+                isEditable: true, // Always editable - cursor and selection work at all times
+                shouldHideKeyboard: showingFormatMenu, // Hide keyboard with custom inputView (Apple Notes behavior)
+                onAttributesChanged: { formats in
+                    // Update active formats for format menu button states
+                    activeFormats = formats
+                }
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .id(chapter.id) // CRITICAL: Stable identity prevents view recreation
@@ -105,10 +113,11 @@ struct ChapterEditorView: View {
         .sheet(isPresented: $showingFormatMenu) {
             FormatMenuSheet(
                 currentTextStyle: $currentTextStyle,
+                activeFormats: activeFormats,
                 onFormatAction: handleTextFormat
             )
             .presentationDetents([.height(250)])
-            .presentationBackgroundInteraction(.enabled) // Key modifier!
+            .presentationBackgroundInteraction(.enabled) // Key modifier: allows interaction with editor!
             .interactiveDismissDisabled()
             .presentationDragIndicator(.hidden)
         }
@@ -136,10 +145,19 @@ struct ChapterEditorView: View {
                 ExportView(book: book, chapter: chapter)
             }
         }
+        // MARK: - Format Menu Keyboard Management (Apple Notes behavior)
         .onChange(of: showingFormatMenu) { _, isShowing in
-            // Dismiss keyboard when format menu opens
             if isShowing {
+                // Dismiss keyboard when format menu opens
+                // Custom inputView keeps text view interactive (cursor visible, movable, text selectable)
                 isEditorFocused = false
+            } else {
+                // Restore keyboard when format menu closes
+                // Small delay ensures smooth animation transition
+                Task {
+                    try? await Task.sleep(for: .milliseconds(100))
+                    isEditorFocused = true
+                }
             }
         }
         .toolbar {
@@ -249,8 +267,8 @@ struct ChapterEditorView: View {
         }
     }
 
-    /// Handle text formatting from the format menu
-    /// - Parameter format: The text format to apply
+    /// Handle text formatting from the format menu with intelligent toggling
+    /// - Parameter format: The text format to apply or remove
     private func handleTextFormat(_ format: TextFormat) {
         let mutableText = NSMutableAttributedString(attributedString: attributedText)
 
@@ -270,13 +288,31 @@ struct ChapterEditorView: View {
             currentTextStyle = style
 
         case .bold, .italic, .underline, .strikethrough, .highlight, .textColor:
-            // For character formatting, apply to selected text
+            // For character formatting, check if active and toggle
             if textSelection.length > 0 {
                 targetRange = textSelection
-                RichTextEditor.applyCharacterFormat(format, to: mutableText, range: targetRange)
             } else {
                 // No selection - apply to current paragraph for convenience
                 targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            }
+
+            // Check if format is currently active
+            let isActive = activeFormats.contains(where: { existingFormat in
+                // For formats with associated values (colors), compare the base type
+                switch (format, existingFormat) {
+                case (.bold, .bold), (.italic, .italic), (.underline, .underline), (.strikethrough, .strikethrough):
+                    return true
+                case (.highlight, .highlight), (.textColor, .textColor):
+                    return true
+                default:
+                    return false
+                }
+            })
+
+            // Toggle: if active, remove; if inactive, apply
+            if isActive {
+                RichTextEditor.removeCharacterFormat(format, from: mutableText, range: targetRange)
+            } else {
                 RichTextEditor.applyCharacterFormat(format, to: mutableText, range: targetRange)
             }
 
