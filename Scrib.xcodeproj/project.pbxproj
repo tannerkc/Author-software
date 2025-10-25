@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		6C17D2632EAAF3A900EA2C6B /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 6C17D2622EAAF3A900EA2C6B /* ZIPFoundation */; };
+		6C17D26A2EAC227700EA2C6B /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2672EAC227700EA2C6B /* Note.swift */; };
+		6C17D26B2EAC227700EA2C6B /* Character.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2662EAC227700EA2C6B /* Character.swift */; };
+		6C17D26C2EAC227700EA2C6B /* Scene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2692EAC227700EA2C6B /* Scene.swift */; };
+		6C17D26D2EAC227700EA2C6B /* ResearchItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2682EAC227700EA2C6B /* ResearchItem.swift */; };
 		A001 /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* ScribApp.swift */; };
 		A002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* ContentView.swift */; };
 		A003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B003 /* Assets.xcassets */; };
@@ -35,6 +39,10 @@
 		A025 /* DOCXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* DOCXExporter.swift */; };
 		A026 /* EPUBExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B026 /* EPUBExporter.swift */; };
 		A027 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B027 /* ExportView.swift */; };
+		A028 /* Color+Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = B028 /* Color+Platform.swift */; };
+		A029 /* View+Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = B029 /* View+Platform.swift */; };
+		A030 /* EditMode+macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B030 /* EditMode+macOS.swift */; };
+		A031 /* PlatformConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B031 /* PlatformConfiguration.swift */; };
 		A101 /* BookModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B101 /* BookModelTests.swift */; };
 		A102 /* ChapterModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B102 /* ChapterModelTests.swift */; };
 /* End PBXBuildFile section */
@@ -53,6 +61,10 @@
 		6C17D2602EAAA48600EA2C6B /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		6C17D2642EAC028400EA2C6B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6C17D2652EAC02A000EA2C6B /* Scrib.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Scrib.entitlements; sourceTree = "<group>"; };
+		6C17D2662EAC227700EA2C6B /* Character.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Character.swift; sourceTree = "<group>"; };
+		6C17D2672EAC227700EA2C6B /* Note.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Note.swift; sourceTree = "<group>"; };
+		6C17D2682EAC227700EA2C6B /* ResearchItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchItem.swift; sourceTree = "<group>"; };
+		6C17D2692EAC227700EA2C6B /* Scene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scene.swift; sourceTree = "<group>"; };
 		B001 /* ScribApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribApp.swift; sourceTree = "<group>"; };
 		B002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -80,6 +92,10 @@
 		B025 /* DOCXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOCXExporter.swift; sourceTree = "<group>"; };
 		B026 /* EPUBExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPUBExporter.swift; sourceTree = "<group>"; };
 		B027 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
+		B028 /* Color+Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Platform.swift"; sourceTree = "<group>"; };
+		B029 /* View+Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Platform.swift"; sourceTree = "<group>"; };
+		B030 /* EditMode+macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditMode+macOS.swift"; sourceTree = "<group>"; };
+		B031 /* PlatformConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformConfiguration.swift; sourceTree = "<group>"; };
 		B101 /* BookModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModelTests.swift; sourceTree = "<group>"; };
 		B102 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
 		P001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,6 +143,7 @@
 				G007 /* Extensions */,
 				G008 /* Resources */,
 				G009 /* Services */,
+				G011 /* Utilities */,
 			);
 			path = Scrib;
 			sourceTree = "<group>";
@@ -142,6 +159,10 @@
 		G004 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				6C17D2662EAC227700EA2C6B /* Character.swift */,
+				6C17D2672EAC227700EA2C6B /* Note.swift */,
+				6C17D2682EAC227700EA2C6B /* ResearchItem.swift */,
+				6C17D2692EAC227700EA2C6B /* Scene.swift */,
 				B004 /* Book.swift */,
 				B005 /* Chapter.swift */,
 				B015 /* ChapterMetadata.swift */,
@@ -179,6 +200,8 @@
 			children = (
 				B013 /* Date+Extensions.swift */,
 				B014 /* Color+Extensions.swift */,
+				B028 /* Color+Platform.swift */,
+				B029 /* View+Platform.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -208,6 +231,15 @@
 				B026 /* EPUBExporter.swift */,
 			);
 			path = Exporters;
+			sourceTree = "<group>";
+		};
+		G011 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B030 /* EditMode+macOS.swift */,
+				B031 /* PlatformConfiguration.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 		G020 /* Components */ = {
@@ -368,7 +400,15 @@
 				A024 /* PDFExporter.swift in Sources */,
 				A025 /* DOCXExporter.swift in Sources */,
 				A026 /* EPUBExporter.swift in Sources */,
+				6C17D26A2EAC227700EA2C6B /* Note.swift in Sources */,
+				6C17D26B2EAC227700EA2C6B /* Character.swift in Sources */,
+				6C17D26C2EAC227700EA2C6B /* Scene.swift in Sources */,
+				6C17D26D2EAC227700EA2C6B /* ResearchItem.swift in Sources */,
 				A027 /* ExportView.swift in Sources */,
+				A028 /* Color+Platform.swift in Sources */,
+				A029 /* View+Platform.swift in Sources */,
+				A030 /* EditMode+macOS.swift in Sources */,
+				A031 /* PlatformConfiguration.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

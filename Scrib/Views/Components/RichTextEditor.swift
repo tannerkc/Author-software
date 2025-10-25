@@ -7,6 +7,8 @@
 //
 
 import SwiftUI
+
+#if canImport(UIKit)
 import UIKit
 
 /// Rich text editor supporting NSAttributedString formatting
@@ -487,3 +489,94 @@ extension UIFont {
 
     return PreviewWrapper()
 }
+
+#elseif canImport(AppKit)
+
+/// macOS RichTextEditor stub using NSTextView
+///
+/// TODO: Implement full macOS rich text editing with NSTextView
+struct RichTextEditor: NSViewRepresentable {
+    @Binding var attributedText: NSAttributedString
+    @Binding var selectedRange: NSRange
+    var isFocused: FocusState<Bool>.Binding
+    var isEditable: Bool = true
+    var shouldHideKeyboard: Bool = false
+    var onAttributesChanged: ((Set<TextFormat>) -> Void)? = nil
+    var textDidChange: ((NSAttributedString) -> Void)?
+    var selectionDidChange: ((NSRange) -> Void)?
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        let textView = scrollView.documentView as! NSTextView
+        textView.delegate = context.coordinator
+        textView.isEditable = isEditable
+        textView.isRichText = true
+        textView.textStorage?.setAttributedString(attributedText)
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        if textView.attributedString() != attributedText {
+            textView.textStorage?.setAttributedString(attributedText)
+        }
+        textView.isEditable = isEditable
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: RichTextEditor
+
+        init(_ parent: RichTextEditor) {
+            self.parent = parent
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.attributedText = textView.attributedString()
+            parent.textDidChange?(textView.attributedString())
+        }
+
+        func textViewDidChangeSelection(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.selectedRange = textView.selectedRange()
+            parent.selectionDidChange?(textView.selectedRange())
+        }
+    }
+
+    // Static helper methods (stubs for macOS)
+    static func detectActiveFormats(in text: NSAttributedString, at range: NSRange) -> Set<TextFormat> {
+        return []
+    }
+
+    static func paragraphRange(for range: NSRange, in text: NSAttributedString) -> NSRange {
+        return range
+    }
+
+    static func applyTextStyle(_ style: TextStyle, to text: NSMutableAttributedString, range: NSRange) {
+        // Stub implementation
+    }
+
+    static func removeCharacterFormat(_ format: TextFormat, from text: NSMutableAttributedString, range: NSRange) {
+        // Stub implementation
+    }
+
+    static func applyCharacterFormat(_ format: TextFormat, to text: NSMutableAttributedString, range: NSRange) {
+        // Stub implementation
+    }
+
+    static func applyIndent(to attributedText: NSMutableAttributedString, range: NSRange, indentIncrement: CGFloat = 20) {
+        // Stub implementation for macOS
+        // TODO: Implement proper indentation using NSParagraphStyle
+    }
+
+    static func applyOutdent(to attributedText: NSMutableAttributedString, range: NSRange, indentDecrement: CGFloat = 20) {
+        // Stub implementation for macOS
+        // TODO: Implement proper outdentation using NSParagraphStyle
+    }
+}
+
+#endif // canImport(UIKit) or canImport(AppKit)

@@ -320,7 +320,7 @@ struct NewBookSheet: View {
             }
             .navigationTitle("New Book")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
+            .adaptiveNavigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

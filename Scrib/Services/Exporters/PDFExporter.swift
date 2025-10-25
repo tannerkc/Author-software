@@ -5,8 +5,51 @@
 //  Created by Claude on 2025-01-23.
 //
 
-import UIKit
+import Foundation
 import PDFKit
+
+#if canImport(UIKit)
+import UIKit
+// Use platform-specific types and extensions from CrossPlatform.swift
+fileprivate typealias PlatformFont = UIFont
+fileprivate typealias PlatformColor = UIColor
+#elseif canImport(AppKit)
+import AppKit
+// Use platform-specific types and extensions from CrossPlatform.swift
+fileprivate typealias PlatformFont = NSFont
+fileprivate typealias PlatformColor = NSColor
+#endif
+
+// MARK: - Cross-Platform Color Extensions
+// Provide consistent color naming across iOS (UIColor) and macOS (NSColor)
+extension PlatformColor {
+    /// Cross-platform label color (adapts to light/dark mode)
+    fileprivate static var labelColor: PlatformColor {
+        #if canImport(UIKit)
+        return UIColor.label
+        #elseif canImport(AppKit)
+        return NSColor.labelColor
+        #endif
+    }
+
+    /// Cross-platform secondary label color
+    fileprivate static var secondaryLabelColor: PlatformColor {
+        #if canImport(UIKit)
+        return UIColor.secondaryLabel
+        #elseif canImport(AppKit)
+        return NSColor.secondaryLabelColor
+        #endif
+    }
+
+    /// Cross-platform tertiary label color
+    fileprivate static var tertiaryLabelColor: PlatformColor {
+        #if canImport(UIKit)
+        return UIColor.tertiaryLabel
+        #elseif canImport(AppKit)
+        return NSColor.tertiaryLabelColor
+        #endif
+    }
+}
 
 /// PDF export implementation using UIGraphicsPDFRenderer
 /// - Swift 6.2 compliant with @MainActor isolation
@@ -42,6 +85,7 @@ enum PDFExporter {
         ]
 
         // Configure PDF renderer
+        #if os(iOS)
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = pdfMetadata
 
@@ -60,7 +104,7 @@ enum PDFExporter {
                 currentY = renderCoverPage(
                     in: context,
                     pageSize: pageSize,
-                    margins: margins,
+                    margins: margins.toUIEdgeInsets(),
                     metadata: configuration.metadata
                 )
             }
@@ -72,7 +116,7 @@ enum PDFExporter {
                     in: context,
                     chapters: chapters,
                     pageSize: pageSize,
-                    margins: margins,
+                    margins: margins.toUIEdgeInsets(),
                     configuration: configuration
                 )
             }
@@ -89,12 +133,21 @@ enum PDFExporter {
                     chapter,
                     in: context,
                     pageSize: pageSize,
-                    margins: margins,
+                    margins: margins.toUIEdgeInsets(),
                     configuration: configuration,
                     startY: currentY
                 )
             }
         }
+        #else
+        // macOS: Use PDFKit for PDF generation (simplified for now)
+        let pdfData = createPDFWithPDFKit(
+            chapters: chapters,
+            configuration: configuration,
+            pageSize: pageSize,
+            margins: margins
+        )
+        #endif
 
         // Write PDF to file
         do {
@@ -107,6 +160,7 @@ enum PDFExporter {
 
     // MARK: - Rendering Methods
 
+    #if os(iOS)
     /// Render cover page
     private static func renderCoverPage(
         in context: UIGraphicsPDFRendererContext,
@@ -118,10 +172,10 @@ enum PDFExporter {
         let centerY = pageSize.height / 2
 
         // Title
-        let titleFont = UIFont.systemFont(ofSize: 36, weight: .bold)
+        let titleFont = PlatformFont.systemFont(ofSize: 36, weight: .bold)
         let titleAttributes: [NSAttributedString.Key: Any] = [
             .font: titleFont,
-            .foregroundColor: UIColor.label
+            .foregroundColor: PlatformColor.labelColor
         ]
         let titleString = NSAttributedString(
             string: metadata.title,
@@ -138,10 +192,10 @@ enum PDFExporter {
 
         // Author
         if !metadata.author.isEmpty {
-            let authorFont = UIFont.systemFont(ofSize: 24, weight: .regular)
+            let authorFont = PlatformFont.systemFont(ofSize: 24, weight: .regular)
             let authorAttributes: [NSAttributedString.Key: Any] = [
                 .font: authorFont,
-                .foregroundColor: UIColor.secondaryLabel
+                .foregroundColor: PlatformColor.secondaryLabelColor
             ]
             let authorString = NSAttributedString(
                 string: "by \(metadata.author)",
@@ -158,10 +212,10 @@ enum PDFExporter {
 
         // Genre
         if !metadata.genre.isEmpty {
-            let genreFont = UIFont.systemFont(ofSize: 14, weight: .medium)
+            let genreFont = PlatformFont.systemFont(ofSize: 14, weight: .medium)
             let genreAttributes: [NSAttributedString.Key: Any] = [
                 .font: genreFont,
-                .foregroundColor: UIColor.tertiaryLabel
+                .foregroundColor: PlatformColor.tertiaryLabelColor
             ]
             let genreString = NSAttributedString(
                 string: metadata.genre,
@@ -191,10 +245,10 @@ enum PDFExporter {
         var currentY = margins.top
 
         // TOC Title
-        let titleFont = UIFont.systemFont(ofSize: 24, weight: .bold)
+        let titleFont = PlatformFont.systemFont(ofSize: 24, weight: .bold)
         let titleAttributes: [NSAttributedString.Key: Any] = [
             .font: titleFont,
-            .foregroundColor: UIColor.label
+            .foregroundColor: PlatformColor.labelColor
         ]
         let titleString = NSAttributedString(
             string: "Table of Contents",
@@ -210,10 +264,10 @@ enum PDFExporter {
         currentY += 50
 
         // Chapter entries
-        let entryFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+        let entryFont = PlatformFont.systemFont(ofSize: 14, weight: .regular)
         let entryAttributes: [NSAttributedString.Key: Any] = [
             .font: entryFont,
-            .foregroundColor: UIColor.label
+            .foregroundColor: PlatformColor.labelColor
         ]
 
         for (index, chapter) in chapters.enumerated() {
@@ -252,10 +306,10 @@ enum PDFExporter {
         var currentY = startY
 
         // Chapter title
-        let titleFont = UIFont.systemFont(ofSize: 20, weight: .bold)
+        let titleFont = PlatformFont.systemFont(ofSize: 20, weight: .bold)
         let titleAttributes: [NSAttributedString.Key: Any] = [
             .font: titleFont,
-            .foregroundColor: UIColor.label
+            .foregroundColor: PlatformColor.labelColor
         ]
         let chapterTitle = chapter.extractedTitle.isEmpty
             ? "Chapter"
@@ -276,7 +330,7 @@ enum PDFExporter {
 
         // Chapter content
         let content = chapter.getAttributedContent()
-        let bodyFont = UIFont.systemFont(ofSize: CGFloat(configuration.fontSize))
+        let bodyFont = PlatformFont.systemFont(ofSize: CGFloat(configuration.fontSize))
 
         // Convert attributed string to use specified font
         let mutableContent = NSMutableAttributedString(attributedString: content)
@@ -327,7 +381,7 @@ enum PDFExporter {
             } else {
                 // Calculate final Y position
                 let lines = CTFrameGetLines(frame) as! [CTLine]
-                if let lastLine = lines.last {
+                if !lines.isEmpty {
                     var origins = [CGPoint](repeating: .zero, count: 1)
                     CTFrameGetLineOrigins(frame, CFRange(location: lines.count - 1, length: 1), &origins)
                     let lastLineY = pageSize.height - origins[0].y
@@ -338,4 +392,71 @@ enum PDFExporter {
 
         return currentY
     }
+    #endif
+
+    // MARK: - macOS PDF Generation
+
+    #if os(macOS)
+    /// Create PDF using PDFKit (macOS implementation)
+    private static func createPDFWithPDFKit(
+        chapters: [Chapter],
+        configuration: ExportConfiguration,
+        pageSize: CGSize,
+        margins: PageMargins
+    ) -> Data {
+        // Create PDF document
+        let pdfDocument = PDFDocument()
+
+        // Create a simple text representation for now
+        // TODO: Implement full-featured PDFKit rendering matching iOS version
+        var fullText = ""
+
+        if configuration.includeCoverPage {
+            fullText += "\(configuration.metadata.title)\n"
+            fullText += "by \(configuration.metadata.author)\n\n\n"
+        }
+
+        for chapter in chapters {
+            fullText += "\(chapter.title)\n\n"
+            fullText += "\(chapter.content)\n\n"
+        }
+
+        // Create PDF page with text
+        let pageRect = CGRect(origin: .zero, size: pageSize)
+        let textAttributes: [NSAttributedString.Key: Any] = [
+            .font: PlatformFont.systemFont(ofSize: 12),
+            .foregroundColor: PlatformColor.labelColor
+        ]
+
+        let attributedString = NSAttributedString(string: fullText, attributes: textAttributes)
+
+        // Create PDF data
+        let pdfData = NSMutableData()
+        var mediaBox = pageRect
+        guard let consumer = CGDataConsumer(data: pdfData as CFMutableData),
+              let pdfContext = CGContext(consumer: consumer, mediaBox: &mediaBox, nil) else {
+            return Data()
+        }
+
+        pdfContext.beginPDFPage(nil)
+        pdfContext.textMatrix = CGAffineTransform.identity
+
+        // Draw text (simplified - full implementation would handle pagination)
+        let frameSetter = CTFramesetterCreateWithAttributedString(attributedString)
+        let textRect = CGRect(
+            x: margins.left,
+            y: margins.top,
+            width: pageSize.width - margins.left - margins.right,
+            height: pageSize.height - margins.top - margins.bottom
+        )
+        let path = CGPath(rect: textRect, transform: nil)
+        let frame = CTFramesetterCreateFrame(frameSetter, CFRangeMake(0, attributedString.length), path, nil)
+        CTFrameDraw(frame, pdfContext)
+
+        pdfContext.endPDFPage()
+        pdfContext.closePDF()
+
+        return pdfData as Data
+    }
+    #endif
 }

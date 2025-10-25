@@ -64,7 +64,7 @@ struct CharacterMarkerSheet: View {
                 }
             }
             .navigationTitle("Mark Character")
-            .navigationBarTitleDisplayMode(.inline)
+            .adaptiveNavigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

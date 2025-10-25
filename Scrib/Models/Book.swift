@@ -35,6 +35,22 @@ final class Book {
     @Relationship(deleteRule: .cascade, inverse: \Chapter.book)
     var chapters: [Chapter]
 
+    /// Collection of scenes belonging to this book
+    @Relationship(deleteRule: .cascade, inverse: \Scene.book)
+    var scenes: [Scene]
+
+    /// Collection of notes belonging to this book
+    @Relationship(deleteRule: .cascade, inverse: \Note.book)
+    var notes: [Note]
+
+    /// Collection of research items belonging to this book
+    @Relationship(deleteRule: .cascade, inverse: \ResearchItem.book)
+    var researchItems: [ResearchItem]
+
+    /// Collection of characters in this book
+    @Relationship(deleteRule: .cascade, inverse: \Character.book)
+    var characters: [Character]
+
     /// Initialize a new book
     /// - Parameters:
     ///   - id: Unique identifier (defaults to new UUID)
@@ -43,13 +59,21 @@ final class Book {
     ///   - dateCreated: Creation date (defaults to now)
     ///   - lastModified: Last modification date (defaults to now)
     ///   - chapters: Initial chapters (defaults to empty array)
+    ///   - scenes: Initial scenes (defaults to empty array)
+    ///   - notes: Initial notes (defaults to empty array)
+    ///   - researchItems: Initial research items (defaults to empty array)
+    ///   - characters: Initial characters (defaults to empty array)
     init(
         id: UUID = UUID(),
         title: String,
         genre: String = "General",
         dateCreated: Date = Date(),
         lastModified: Date = Date(),
-        chapters: [Chapter] = []
+        chapters: [Chapter] = [],
+        scenes: [Scene] = [],
+        notes: [Note] = [],
+        researchItems: [ResearchItem] = [],
+        characters: [Character] = []
     ) {
         self.id = id
         self.title = title
@@ -57,11 +81,35 @@ final class Book {
         self.dateCreated = dateCreated
         self.lastModified = lastModified
         self.chapters = chapters
+        self.scenes = scenes
+        self.notes = notes
+        self.researchItems = researchItems
+        self.characters = characters
     }
 
     /// Returns chapters sorted by their order property
     var sortedChapters: [Chapter] {
         chapters.sorted { $0.order < $1.order }
+    }
+
+    /// Returns scenes sorted by their order property
+    var sortedScenes: [Scene] {
+        scenes.sorted { $0.order < $1.order }
+    }
+
+    /// Returns notes sorted (pinned first, then by order)
+    var sortedNotes: [Note] {
+        notes.sorted()
+    }
+
+    /// Returns research items sorted by their order property
+    var sortedResearchItems: [ResearchItem] {
+        researchItems.sorted { $0.order < $1.order }
+    }
+
+    /// Returns characters sorted by role and order
+    var sortedCharacters: [Character] {
+        characters.sorted()
     }
 
     /// Calculate the total word count across all chapters
@@ -77,6 +125,31 @@ final class Book {
     /// The number of chapters in this book
     var chapterCount: Int {
         chapters.count
+    }
+
+    /// The number of scenes in this book
+    var sceneCount: Int {
+        scenes.count
+    }
+
+    /// The number of notes in this book
+    var noteCount: Int {
+        notes.count
+    }
+
+    /// The number of research items in this book
+    var researchItemCount: Int {
+        researchItems.count
+    }
+
+    /// The number of characters in this book
+    var characterCount: Int {
+        characters.count
+    }
+
+    /// Total material count (all non-chapter items)
+    var materialCount: Int {
+        sceneCount + noteCount + researchItemCount + characterCount
     }
 }
 

@@ -23,23 +23,40 @@ final class DataStore {
     /// The main context for performing data operations
     let modelContext: ModelContext
 
+    /// Initialize the data store with an existing container
+    ///
+    /// Creates a data store instance using an existing ModelContainer.
+    /// This is the primary initializer used by the app.
+    init(container: ModelContainer) {
+        modelContainer = container
+        modelContext = container.mainContext
+    }
+
     /// Initialize the data store with the specified configuration
     ///
-    /// Creates a model container for Book and Chapter entities with persistent storage.
+    /// Creates a model container for all entity types with persistent storage.
     /// Falls back to in-memory storage if initialization fails (for preview/testing).
-    init(inMemory: Bool = false) {
-        let schema = Schema([Book.self, Chapter.self])
+    convenience init(inMemory: Bool = false) {
+        let schema = Schema([
+            Book.self,
+            Chapter.self,
+            ChapterMetadata.self,
+            Scene.self,
+            Note.self,
+            ResearchItem.self,
+            Character.self
+        ])
         let configuration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: inMemory
         )
 
         do {
-            modelContainer = try ModelContainer(
+            let container = try ModelContainer(
                 for: schema,
                 configurations: [configuration]
             )
-            modelContext = modelContainer.mainContext
+            self.init(container: container)
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }
@@ -102,11 +119,77 @@ final class DataStore {
             order: 2
         )
 
+        // Create sample scene
+        let scene1 = Scene(
+            title: "Opening Scene",
+            content: "The tavern was dimly lit, filled with the murmur of conversation and the clink of glasses.",
+            order: 0,
+            synopsis: "Protagonist enters the tavern and meets the mysterious stranger",
+            status: .draft,
+            povCharacter: "Alex",
+            location: "The Rusty Anchor Tavern",
+            timeOfDay: "Evening"
+        )
+
+        // Create sample note
+        let note1 = Note(
+            title: "Character Ideas",
+            content: "Need to develop the antagonist's backstory more. What drives their motivation?",
+            order: 0,
+            category: .character,
+            tags: ["brainstorm", "antagonist"]
+        )
+
+        // Create sample research item
+        let research1 = ResearchItem(
+            title: "Medieval Taverns",
+            content: "Research notes on medieval tavern architecture and social dynamics.",
+            order: 0,
+            itemType: .historical,
+            source: "https://example.com/medieval-taverns",
+            tags: ["worldbuilding", "setting"]
+        )
+
+        // Create sample character
+        let character1 = Character(
+            name: "Alex Morgan",
+            role: .protagonist,
+            physicalDescription: "Tall, athletic build with dark curly hair and green eyes",
+            personality: "Determined, compassionate, sometimes impulsive",
+            backstory: "Former soldier turned adventurer",
+            goals: "Find the truth about their family's mysterious past",
+            order: 0,
+            age: "28",
+            occupation: "Adventurer"
+        )
+
+        // Create sample metadata for chapter1
+        let metadata1 = ChapterMetadata(
+            povCharacter: "Alex Morgan",
+            povStyle: .thirdPerson,
+            sceneLocation: "The Old Manor House",
+            timeOfDay: "Night",
+            chapterType: .standard,
+            isCompleted: true,
+            tags: ["opening", "setup"]
+        )
+
         // Establish relationships
         book.chapters = [chapter1, chapter2, chapter3]
+        book.scenes = [scene1]
+        book.notes = [note1]
+        book.researchItems = [research1]
+        book.characters = [character1]
+
         chapter1.book = book
+        chapter1.metadata = metadata1
         chapter2.book = book
         chapter3.book = book
+        scene1.book = book
+        note1.book = book
+        research1.book = book
+        character1.book = book
+        metadata1.chapter = chapter1
 
         // Insert into context
         modelContext.insert(book)

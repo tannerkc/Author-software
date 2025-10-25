@@ -6,7 +6,34 @@
 //
 
 import Foundation
+
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
+/// Simple cross-platform edge insets for PDF export margins
+struct PageMargins: Sendable {
+    let top: CGFloat
+    let left: CGFloat
+    let bottom: CGFloat
+    let right: CGFloat
+
+    #if canImport(UIKit)
+    /// Convert to UIEdgeInsets for iOS/UIKit
+    func toUIEdgeInsets() -> UIEdgeInsets {
+        UIEdgeInsets(top: top, left: left, bottom: bottom, right: right)
+    }
+    #endif
+
+    #if canImport(AppKit)
+    /// Convert to NSEdgeInsets for macOS/AppKit
+    func toNSEdgeInsets() -> NSEdgeInsets {
+        NSEdgeInsets(top: top, left: left, bottom: bottom, right: right)
+    }
+    #endif
+}
 
 /// Metadata for book exports (EPUB, PDF, DOCX)
 @MainActor
@@ -135,7 +162,7 @@ enum PageSize: String, CaseIterable, Sendable {
         }
     }
 
-    var margins: UIEdgeInsets {
-        UIEdgeInsets(top: 72, left: 72, bottom: 72, right: 72) // 1 inch margins
+    var margins: PageMargins {
+        PageMargins(top: 72, left: 72, bottom: 72, right: 72) // 1 inch margins
     }
 }

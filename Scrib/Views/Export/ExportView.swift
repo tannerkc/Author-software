@@ -84,7 +84,7 @@ struct ExportView: View {
                 }
             }
             .navigationTitle("Export \(selectedFormat.rawValue)")
-            .navigationBarTitleDisplayMode(.inline)
+            .adaptiveNavigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -179,6 +179,7 @@ struct ExportView: View {
 
 // MARK: - Share Sheet
 
+#if os(iOS)
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
 
@@ -194,6 +195,23 @@ struct ShareSheet: UIViewControllerRepresentable {
         // No updates needed
     }
 }
+#elseif os(macOS)
+import AppKit
+
+struct ShareSheet: NSViewRepresentable {
+    let items: [Any]
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        // On macOS, use NSSharingService
+        // For now, this is a stub - proper implementation would use NSSharingServicePicker
+    }
+}
+#endif
 
 // MARK: - URL Identifiable Extension
 

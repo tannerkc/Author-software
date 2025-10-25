@@ -6,7 +6,37 @@
 //
 
 import Foundation
+#if canImport(UIKit)
 import UIKit
+fileprivate typealias PlatformFont = UIFont
+fileprivate typealias PlatformColor = UIColor
+#elseif canImport(AppKit)
+import AppKit
+fileprivate typealias PlatformFont = NSFont
+fileprivate typealias PlatformColor = NSColor
+#endif
+
+fileprivate extension PlatformFont {
+    var isBold: Bool {
+        #if canImport(UIKit)
+        return fontDescriptor.symbolicTraits.contains(.traitBold)
+        #elseif canImport(AppKit)
+        return fontDescriptor.symbolicTraits.contains(.bold)
+        #else
+        return false
+        #endif
+    }
+
+    var isItalic: Bool {
+        #if canImport(UIKit)
+        return fontDescriptor.symbolicTraits.contains(.traitItalic)
+        #elseif canImport(AppKit)
+        return fontDescriptor.symbolicTraits.contains(.italic)
+        #else
+        return false
+        #endif
+    }
+}
 #if canImport(ZIPFoundation)
 import ZIPFoundation
 #endif
@@ -470,11 +500,11 @@ enum EPUBExporter {
                     var content = xmlEscape(paragraph)
 
                     // Apply formatting
-                    if let font = attributes[.font] as? UIFont {
-                        if font.fontDescriptor.symbolicTraits.contains(.traitBold) {
+                    if let font = attributes[.font] as? PlatformFont {
+                        if font.isBold {
                             content = "<strong>\(content)</strong>"
                         }
-                        if font.fontDescriptor.symbolicTraits.contains(.traitItalic) {
+                        if font.isItalic {
                             content = "<em>\(content)</em>"
                         }
                     }
@@ -487,11 +517,11 @@ enum EPUBExporter {
                 var content = xmlEscape(text)
 
                 // Apply formatting
-                if let font = attributes[.font] as? UIFont {
-                    if font.fontDescriptor.symbolicTraits.contains(.traitBold) {
+                if let font = attributes[.font] as? PlatformFont {
+                    if font.isBold {
                         content = "<strong>\(content)</strong>"
                     }
-                    if font.fontDescriptor.symbolicTraits.contains(.traitItalic) {
+                    if font.isItalic {
                         content = "<em>\(content)</em>"
                     }
                 }

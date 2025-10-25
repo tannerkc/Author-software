@@ -15,24 +15,45 @@ import SwiftData
 /// that reimagines Apple Notes as a book-authoring environment.
 @main
 struct ScribApp: App {
-    /// Data store instance for the app
-    @State private var dataStore = DataStore()
+    /// Model container for SwiftData persistence
+    let modelContainer: ModelContainer
 
     /// Track whether this is the first launch
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
 
-    var body: some Scene {
+    init() {
+        // Initialize model container
+        let schema = Schema([
+            Book.self,
+            Chapter.self,
+            ChapterMetadata.self,
+            Scene.self,
+            Note.self,
+            ResearchItem.self,
+            Character.self
+        ])
+        let configuration = ModelConfiguration(schema: schema)
+
+        do {
+            modelContainer = try ModelContainer(for: schema, configurations: [configuration])
+        } catch {
+            fatalError("Could not initialize ModelContainer: \(error)")
+        }
+    }
+
+    var body: some SwiftUI.Scene {
         WindowGroup {
             ContentView()
+                .modelContainer(modelContainer)
                 .task {
                     // Create sample data on first launch
                     if !hasLaunchedBefore {
+                        let dataStore = DataStore(container: modelContainer)
                         dataStore.createSampleData()
                         hasLaunchedBefore = true
                     }
                 }
         }
-        .modelContainer(dataStore.modelContainer)
 
         #if os(macOS)
         // macOS-specific settings window

@@ -60,7 +60,7 @@ struct InlineNoteSheet: View {
                 }
             }
             .navigationTitle("Add Note")
-            .navigationBarTitleDisplayMode(.inline)
+            .adaptiveNavigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

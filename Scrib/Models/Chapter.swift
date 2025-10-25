@@ -8,7 +8,27 @@
 
 import Foundation
 import SwiftData
+
+#if canImport(UIKit)
 import UIKit
+fileprivate typealias PlatformFont = UIFont
+fileprivate typealias PlatformColor = UIColor
+#elseif canImport(AppKit)
+import AppKit
+fileprivate typealias PlatformFont = NSFont
+fileprivate typealias PlatformColor = NSColor
+#endif
+
+// MARK: - Cross-Platform Color Extensions
+extension PlatformColor {
+    fileprivate static var labelColor: PlatformColor {
+        #if canImport(UIKit)
+        return UIColor.label
+        #elseif canImport(AppKit)
+        return NSColor.labelColor
+        #endif
+    }
+}
 
 /// Represents a chapter within a book
 ///
@@ -40,6 +60,10 @@ final class Chapter {
 
     /// Reference to the parent book
     var book: Book?
+
+    /// Chapter metadata (optional one-to-one relationship)
+    @Relationship(deleteRule: .cascade, inverse: \ChapterMetadata.chapter)
+    var metadata: ChapterMetadata?
 
     /// Initialize a new chapter
     /// - Parameters:
@@ -126,6 +150,11 @@ final class Chapter {
     var isEmpty: Bool {
         content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
+    /// Returns true if chapter has metadata
+    var hasMetadata: Bool {
+        metadata != nil
+    }
 }
 
 // MARK: - Comparable
@@ -175,10 +204,10 @@ extension Chapter {
         }
 
         // Create default attributed string from plain text
-        let defaultFont = UIFont.systemFont(ofSize: 17)
+        let defaultFont = PlatformFont.systemFont(ofSize: 17)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: defaultFont,
-            .foregroundColor: UIColor.label
+            .foregroundColor: PlatformColor.labelColor
         ]
         return NSAttributedString(string: content, attributes: attributes)
     }

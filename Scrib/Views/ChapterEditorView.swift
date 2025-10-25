@@ -9,6 +9,23 @@
 import SwiftUI
 import SwiftData
 
+#if canImport(UIKit)
+import UIKit
+fileprivate typealias PlatformFont = UIFont
+fileprivate typealias PlatformColor = UIColor
+#elseif canImport(AppKit)
+import AppKit
+fileprivate typealias PlatformFont = NSFont
+fileprivate typealias PlatformColor = NSColor
+
+// macOS color extension to match UIColor.label
+extension NSColor {
+    fileprivate static var label: NSColor {
+        return .labelColor
+    }
+}
+#endif
+
 /// Detail pane view for editing chapter content
 ///
 /// ChapterEditorView provides a distraction-free writing environment with
@@ -27,6 +44,9 @@ struct ChapterEditorView: View {
     /// The chapter being edited (passed directly to avoid @Query rebuild triggers)
     @Bindable var chapter: Chapter
 
+    /// View model for chapter operations (initialized on appear)
+    @State private var viewModel: ChapterViewModel?
+
     /// Local state for the rich text editor (bound to chapter content)
     @State private var attributedText: NSAttributedString = NSAttributedString()
 
@@ -43,9 +63,6 @@ struct ChapterEditorView: View {
 
     /// Format menu visibility
     @State private var showingFormatMenu = false
-
-    /// Chapter metadata
-    @State private var chapterMetadata = ChapterMetadata()
 
     /// Text formatting state
     @State private var currentTextStyle: TextStyle = .body
@@ -96,8 +113,13 @@ struct ChapterEditorView: View {
             #endif
         }
         .navigationTitle("")  // No navigation title - content speaks for itself
-        .navigationBarTitleDisplayMode(.inline)
+        .adaptiveNavigationBarTitleDisplayMode(.inline)
         .onAppear {
+            // Initialize view model on first appear
+            if viewModel == nil {
+                viewModel = ChapterViewModel(modelContext: modelContext)
+            }
+
             loadChapterContent(chapter)
         }
         .onDisappear {
@@ -110,6 +132,7 @@ struct ChapterEditorView: View {
                 forceSave(chapter)
             }
         }
+        #if os(iOS)
         .sheet(isPresented: $showingFormatMenu) {
             FormatMenuSheet(
                 currentTextStyle: $currentTextStyle,
@@ -121,6 +144,7 @@ struct ChapterEditorView: View {
             .interactiveDismissDisabled()
             .presentationDragIndicator(.hidden)
         }
+        #endif
         .sheet(isPresented: $showingCharacterMarker) {
             CharacterMarkerSheet(selectedText: currentSelection) { marker in
                 print("Marked character: \(marker.name)")
@@ -134,9 +158,11 @@ struct ChapterEditorView: View {
             }
         }
         .sheet(isPresented: $showingMetadata) {
-            ChapterMetadataSheet(metadata: $chapterMetadata) {
-                print("Saved metadata")
-                // TODO: Persist chapter metadata
+            if let viewModel = viewModel {
+                ChapterMetadataSheet(
+                    chapter: chapter,
+                    viewModel: viewModel
+                )
             }
         }
         .sheet(isPresented: $showingExportSheet) {
@@ -257,7 +283,9 @@ struct ChapterEditorView: View {
             showingMetadata = true
         case .markScene:
             // Quick-set scene location
-            chapterMetadata.sceneLocation = "Scene"
+            if let metadata = chapter.metadata {
+                metadata.sceneLocation = "Scene"
+            }
             showingMetadata = true
         case .markPOV:
             // Quick-set POV
@@ -374,8 +402,8 @@ struct ChapterEditorView: View {
 
                 // Insert new marker with proper attributes
                 let markerAttributes: [NSAttributedString.Key: Any] = [
-                    .foregroundColor: UIColor.label, // Adapts to light/dark mode
-                    .font: UIFont.systemFont(ofSize: 17)
+                    .foregroundColor: PlatformColor.label, // Adapts to light/dark mode
+                    .font: PlatformFont.systemFont(ofSize: 17)
                 ]
                 let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
                 mutableText.insert(attributedMarker, at: paragraphRange.location)
@@ -385,8 +413,8 @@ struct ChapterEditorView: View {
             } else {
                 // No existing marker: Insert new marker with proper attributes
                 let markerAttributes: [NSAttributedString.Key: Any] = [
-                    .foregroundColor: UIColor.label, // Adapts to light/dark mode
-                    .font: UIFont.systemFont(ofSize: 17)
+                    .foregroundColor: PlatformColor.label, // Adapts to light/dark mode
+                    .font: PlatformFont.systemFont(ofSize: 17)
                 ]
                 let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
                 mutableText.insert(attributedMarker, at: paragraphRange.location)

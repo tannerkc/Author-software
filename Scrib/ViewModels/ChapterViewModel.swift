@@ -208,6 +208,49 @@ final class ChapterViewModel {
         saveContext()
     }
 
+    // MARK: - Metadata Operations
+
+    /// Create or get metadata for a chapter
+    /// - Parameter chapter: The chapter
+    /// - Returns: The chapter's metadata (existing or newly created)
+    func getOrCreateMetadata(for chapter: Chapter) -> ChapterMetadata {
+        if let existing = chapter.metadata {
+            return existing
+        }
+
+        let metadata = ChapterMetadata()
+        metadata.chapter = chapter
+        chapter.metadata = metadata
+
+        modelContext.insert(metadata)
+        saveContext()
+
+        return metadata
+    }
+
+    /// Update chapter metadata
+    /// - Parameters:
+    ///   - chapter: The chapter
+    ///   - metadata: The metadata to update
+    func updateMetadata(for chapter: Chapter, with metadata: ChapterMetadata) {
+        metadata.lastModified = Date()
+        chapter.lastModified = Date()
+        chapter.book?.lastModified = Date()
+        saveContext()
+    }
+
+    /// Delete chapter metadata
+    /// - Parameter chapter: The chapter whose metadata to delete
+    func deleteMetadata(for chapter: Chapter) {
+        guard let metadata = chapter.metadata else { return }
+
+        chapter.metadata = nil
+        modelContext.delete(metadata)
+        chapter.lastModified = Date()
+        chapter.book?.lastModified = Date()
+        saveContext()
+    }
+
     // MARK: - Auto-Save
 
     /// Schedule an auto-save with debouncing

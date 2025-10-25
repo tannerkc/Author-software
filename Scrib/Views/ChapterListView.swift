@@ -47,6 +47,23 @@ struct ChapterListView: View {
     /// Show export sheet
     @State private var showingExportSheet = false
 
+    /// Show materials view
+    @State private var showingMaterials = false
+
+    /// Controls banner animation on appear
+    @State private var showMaterialsBanner = false
+
+    // MARK: - Metadata Filters
+
+    /// Filter by POV character
+    @State private var filterPOV: String? = nil
+
+    /// Filter by completion status (nil = all, true = completed, false = incomplete)
+    @State private var filterCompleted: Bool? = nil
+
+    /// Filter by chapter type
+    @State private var filterType: ChapterType? = nil
+
     var body: some View {
         List(selection: $selection) {
             ForEach(filteredChapters) { chapter in
@@ -94,11 +111,16 @@ struct ChapterListView: View {
         .navigationTitle(book.title)
         .toolbar {
             #if os(iOS)
-            // Top toolbar: Share and ellipsis menu on right
+            // Top toolbar: Share, Filter, and ellipsis menu on right
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: book.title) {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
+            }
+
+            // Filter menu
+            ToolbarItem(placement: .topBarTrailing) {
+                filterMenu
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -167,6 +189,11 @@ struct ChapterListView: View {
                 }
             }
 
+            // Filter menu (macOS)
+            ToolbarItem(placement: .secondaryAction) {
+                filterMenu
+            }
+
             ToolbarItem(placement: .secondaryAction) {
                 Menu {
                     Button {
@@ -188,6 +215,17 @@ struct ChapterListView: View {
             }
             #endif
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            #if os(iOS)
+            if showMaterialsBanner {
+                MaterialsBanner(book: book)
+                    .onTapGesture {
+                        showingMaterials = true
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            #endif
+        }
         .sheet(isPresented: $showingNewChapterSheet) {
             NewChapterSheet(
                 title: $chapterTitle,
@@ -202,6 +240,11 @@ struct ChapterListView: View {
         }
         .sheet(isPresented: $showingExportSheet) {
             ExportView(book: book)
+        }
+        .sheet(isPresented: $showingMaterials) {
+            // TODO: Add MaterialsView and related files to Xcode project
+            // MaterialsView(book: book)
+            Text("Materials view coming soon")
         }
         .alert("Rename Chapter", isPresented: $showingRenameAlert) {
             TextField("Title", text: $chapterTitle)
@@ -233,23 +276,67 @@ struct ChapterListView: View {
             if viewModel == nil {
                 viewModel = ChapterViewModel(modelContext: modelContext)
             }
+
+            // Animate banner in with delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.spring()) {
+                    showMaterialsBanner = true
+                }
+            }
         }
     }
 
     // MARK: - Computed Properties
 
-    /// Sorted and filtered chapters
+    /// Sorted and filtered chapters (applies both search and metadata filters)
     private var filteredChapters: [Chapter] {
-        let sorted = book.sortedChapters
+        var chapters = book.sortedChapters
 
-        if searchText.isEmpty {
-            return sorted
-        } else {
-            return sorted.filter { chapter in
+        // Apply search filter
+        if !searchText.isEmpty {
+            chapters = chapters.filter { chapter in
                 chapter.title.localizedCaseInsensitiveContains(searchText) ||
                 chapter.content.localizedCaseInsensitiveContains(searchText)
             }
         }
+
+        // Apply POV filter
+        if let povFilter = filterPOV {
+            chapters = chapters.filter { chapter in
+                chapter.metadata?.povCharacter == povFilter
+            }
+        }
+
+        // Apply completion status filter
+        if let completedFilter = filterCompleted {
+            chapters = chapters.filter { chapter in
+                chapter.metadata?.isCompleted == completedFilter
+            }
+        }
+
+        // Apply chapter type filter
+        if let typeFilter = filterType {
+            chapters = chapters.filter { chapter in
+                chapter.metadata?.chapterType == typeFilter
+            }
+        }
+
+        return chapters
+    }
+
+    /// Unique POV characters from all chapters with metadata
+    private var uniquePOVCharacters: [String] {
+        let allPOVs = book.chapters.compactMap { $0.metadata?.povCharacter }.filter { !$0.isEmpty }
+        return Array(Set(allPOVs)).sorted()
+    }
+
+    /// Number of active filters
+    private var activeFilterCount: Int {
+        var count = 0
+        if filterPOV != nil { count += 1 }
+        if filterCompleted != nil { count += 1 }
+        if filterType != nil { count += 1 }
+        return count
     }
 
     // MARK: - Actions
@@ -298,6 +385,87 @@ struct ChapterListView: View {
     private func reorderChapters(from source: IndexSet, to destination: Int) {
         viewModel?.reorderChapters(in: book, from: source, to: destination)
     }
+
+    /// Clear all active filters
+    private func clearFilters() {
+        filterPOV = nil
+        filterCompleted = nil
+        filterType = nil
+    }
+
+    // MARK: - Filter Menu
+
+    /// Filter menu for metadata-based filtering
+    private var filterMenu: some View {
+        Menu {
+            povFilterSection
+            statusFilterSection
+            chapterTypeFilterSection
+            clearFiltersSection
+        } label: {
+            Label(
+                "Filter",
+                systemImage: activeFilterCount > 0 ? "line.3.horizontal.decrease" : "line.3.horizontal.decrease"
+            )
+        }
+        .badge(activeFilterCount > 0 ? activeFilterCount : 0)
+    }
+
+    @ViewBuilder
+    private var povFilterSection: some View {
+        if !uniquePOVCharacters.isEmpty {
+            Section("POV Character") {
+                ForEach(uniquePOVCharacters, id: \.self) { pov in
+                    Button {
+                        filterPOV = (filterPOV == pov) ? nil : pov
+                    } label: {
+                        Label(pov, systemImage: filterPOV == pov ? "checkmark" : "person.circle")
+                    }
+                }
+            }
+        }
+    }
+
+    private var statusFilterSection: some View {
+        Section("Status") {
+            Button {
+                filterCompleted = (filterCompleted == true) ? nil : true
+            } label: {
+                Label("Completed", systemImage: filterCompleted == true ? "checkmark" : "checkmark.circle")
+            }
+
+            Button {
+                filterCompleted = (filterCompleted == false) ? nil : false
+            } label: {
+                Label("Incomplete", systemImage: filterCompleted == false ? "checkmark" : "circle")
+            }
+        }
+    }
+
+    private var chapterTypeFilterSection: some View {
+        Section("Chapter Type") {
+            ForEach(ChapterType.allCases) { type in
+                Button {
+                    filterType = (filterType == type) ? nil : type
+                } label: {
+                    Label(type.rawValue, systemImage: filterType == type ? "checkmark" : type.icon)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var clearFiltersSection: some View {
+        if activeFilterCount > 0 {
+            Section {
+                Button(role: .destructive) {
+                    clearFilters()
+                } label: {
+                    Label("Clear All Filters", systemImage: "xmark.circle")
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Chapter Row View
@@ -313,22 +481,27 @@ struct ChapterRowView: View {
                     .foregroundStyle(chapter.isEmpty ? .secondary : .primary)
                     .font(.title3)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(chapter.extractedTitle)
                         .font(.body)
                         .fontWeight(.medium)
                         .lineLimit(1)
 
                     if !chapter.contentPreview.isEmpty {
-                        Text(chapter.contentPreview)
+                        Text(chapter.contentPreview.trimmingCharacters(in: .whitespacesAndNewlines))
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .lineLimit(2)
+                            .lineLimit(1)
                     } else {
                         Text("Empty chapter")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .italic()
+                    }
+
+                    // Metadata badges
+                    if let metadata = chapter.metadata {
+                        metadataBadges(for: metadata)
                     }
                 }
 
@@ -348,6 +521,79 @@ struct ChapterRowView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    // MARK: - Metadata Badges
+
+    /// Display metadata badges for POV, type, status, and tags
+    @ViewBuilder
+    private func metadataBadges(for metadata: ChapterMetadata) -> some View {
+        HStack(spacing: 6) {
+            // POV character badge
+            if !metadata.povCharacter.isEmpty {
+                Label(metadata.povCharacter, systemImage: "person.circle")
+                    .font(.caption2)
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.blue.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            // Chapter type badge (only if not standard)
+            if metadata.chapterType != .standard {
+                Label(metadata.chapterType.rawValue, systemImage: metadata.chapterType.icon)
+                    .font(.caption2)
+                    .foregroundStyle(.purple)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.purple.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            // Completion status badge
+            if metadata.isCompleted {
+                Label("Complete", systemImage: "checkmark.circle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.green)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.green.opacity(0.1))
+                    .clipShape(Capsule())
+            } else if metadata.needsRevision {
+                Label("Revision", systemImage: "exclamationmark.circle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.orange.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            // Tags (show first 3)
+            if !metadata.tags.isEmpty {
+                ForEach(metadata.tags.prefix(3), id: \.self) { tag in
+                    Text(tag)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.secondary.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+
+                // Show "+N more" if there are additional tags
+                if metadata.tags.count > 3 {
+                    Text("+\(metadata.tags.count - 3) more")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.tertiary.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+            }
+        }
     }
 }
 
@@ -378,7 +624,7 @@ struct NewChapterSheet: View {
             }
             .navigationTitle("New Chapter")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
+            .adaptiveNavigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -401,6 +647,64 @@ struct NewChapterSheet: View {
         #if os(iOS)
         .presentationDetents([.medium])
         #endif
+    }
+}
+
+// MARK: - Materials Banner
+
+/// Banner view for accessing book materials
+struct MaterialsBanner: View {
+    let book: Book
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "folder")
+                .font(.title2)
+                .foregroundStyle(.blue)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Materials")
+                    .font(.footnote)
+
+                HStack(spacing: 12) {
+                    if book.sceneCount > 0 {
+                        Label("\(book.sceneCount)", systemImage: "film")
+                            .font(.caption2)
+                    }
+                    if book.noteCount > 0 {
+                        Label("\(book.noteCount)", systemImage: "note.text")
+                            .font(.caption2)
+                    }
+                    if book.researchItemCount > 0 {
+                        Label("\(book.researchItemCount)", systemImage: "book")
+                            .font(.caption2)
+                    }
+                    if book.characterCount > 0 {
+                        Label("\(book.characterCount)", systemImage: "person.2")
+                            .font(.caption2)
+                    }
+                    
+                    if [book.sceneCount, book.noteCount, book.researchItemCount, book.characterCount].allSatisfy({ $0 == 0 }) {
+                        Text("No materials yet")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .glassEffect(.regular, in: .rect(cornerRadius: 26))
+        .padding(.horizontal, 28)
+        .padding(.bottom, 5)
     }
 }
 

@@ -8,30 +8,104 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
-/// Chapter metadata container
-struct ChapterMetadata: Sendable {
-    var povCharacter: String = ""
-    var povStyle: POVStyle = .thirdPerson
-    var sceneLocation: String = ""
-    var timeOfDay: String = ""
-    var storyDate: Date = Date()
-    var chapterType: ChapterType = .standard
-    var isCompleted: Bool = false
-    var needsRevision: Bool = false
-    var notes: String = ""
-    var tagsString: String = ""
+/// Chapter metadata container (SwiftData model)
+///
+/// Stores metadata for chapters including POV, scene details, status, and tags.
+/// One-to-one relationship with Chapter.
+@Model
+final class ChapterMetadata {
+    /// Unique identifier
+    @Attribute(.unique) var id: UUID
 
-    var tags: [String] {
-        tagsString
+    /// POV character name
+    var povCharacter: String
+
+    /// POV narrative style
+    var povStyle: POVStyle
+
+    /// Scene location/setting
+    var sceneLocation: String
+
+    /// Time of day for the scene
+    var timeOfDay: String
+
+    /// Story date/timeline position
+    var storyDate: Date
+
+    /// Chapter type (standard, prologue, epilogue, etc.)
+    var chapterType: ChapterType
+
+    /// Completion status
+    var isCompleted: Bool
+
+    /// Needs revision flag
+    var needsRevision: Bool
+
+    /// Additional notes
+    var notes: String
+
+    /// Tags for organization (stored as array)
+    var tags: [String]
+
+    /// Timestamp when created
+    var dateCreated: Date
+
+    /// Timestamp of most recent edit
+    var lastModified: Date
+
+    /// Reference to the parent chapter
+    var chapter: Chapter?
+
+    /// Initialize metadata with default values
+    init(
+        id: UUID = UUID(),
+        povCharacter: String = "",
+        povStyle: POVStyle = .thirdPerson,
+        sceneLocation: String = "",
+        timeOfDay: String = "",
+        storyDate: Date = Date(),
+        chapterType: ChapterType = .standard,
+        isCompleted: Bool = false,
+        needsRevision: Bool = false,
+        notes: String = "",
+        tags: [String] = [],
+        dateCreated: Date = Date(),
+        lastModified: Date = Date()
+    ) {
+        self.id = id
+        self.povCharacter = povCharacter
+        self.povStyle = povStyle
+        self.sceneLocation = sceneLocation
+        self.timeOfDay = timeOfDay
+        self.storyDate = storyDate
+        self.chapterType = chapterType
+        self.isCompleted = isCompleted
+        self.needsRevision = needsRevision
+        self.notes = notes
+        self.tags = tags
+        self.dateCreated = dateCreated
+        self.lastModified = lastModified
+    }
+
+    /// Get tags as a comma-separated string (for backward compatibility)
+    var tagsString: String {
+        tags.joined(separator: ", ")
+    }
+
+    /// Set tags from a comma-separated string (for backward compatibility)
+    func setTagsFromString(_ string: String) {
+        tags = string
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+        lastModified = Date()
     }
 }
 
 /// Point of view narrative style
-enum POVStyle: String, CaseIterable, Identifiable, Sendable {
+enum POVStyle: String, CaseIterable, Identifiable, Codable, Sendable {
     case firstPerson = "First Person"
     case secondPerson = "Second Person"
     case thirdPerson = "Third Person Limited"
@@ -41,7 +115,7 @@ enum POVStyle: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// Chapter type/purpose
-enum ChapterType: String, CaseIterable, Identifiable, Sendable {
+enum ChapterType: String, CaseIterable, Identifiable, Sendable, Codable {
     case standard = "Standard"
     case prologue = "Prologue"
     case epilogue = "Epilogue"
@@ -77,7 +151,7 @@ struct CharacterMarker: Identifiable, Sendable {
 }
 
 /// Character role/type classifications
-enum CharacterRole: String, CaseIterable, Identifiable, Sendable {
+enum CharacterRole: String, CaseIterable, Identifiable, Sendable, Codable {
     case protagonist = "Protagonist"
     case antagonist = "Antagonist"
     case supporting = "Supporting"

@@ -171,12 +171,6 @@ struct AdaptiveKeyboardToolbar: View {
                 action: .setMetadata,
                 tint: .indigo
             ),
-            ToolDescriptor(
-                icon: "wand.and.stars",
-                label: "AI Rewrite",
-                action: .aiRewrite,
-                tint: .pink
-            ),
         ]
     }
 }
@@ -226,7 +220,7 @@ struct ToolDescriptor: Hashable {
             }
         )
     }
-    .background(Color(.systemGroupedBackground))
+    .background(Color.systemGroupedBackground)
 }
 
 #Preview("Dark Mode") {
@@ -235,7 +229,7 @@ struct ToolDescriptor: Hashable {
 
         Text("Chapter content goes here...")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
+            .background(Color.systemBackground)
 
         AdaptiveKeyboardToolbar(
             selectedRange: .constant(nil),

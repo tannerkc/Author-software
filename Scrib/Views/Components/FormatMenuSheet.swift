@@ -8,6 +8,8 @@
 
 import SwiftUI
 
+#if os(iOS)
+
 /// Navigation destinations for the format menu
 enum FormatDestination: Hashable {
     case highlightColorPicker
@@ -59,7 +61,7 @@ struct FormatMenuSheet: View {
     //                        .font(.system(size: 16, weight: .semibold))
     //                        .foregroundStyle(.secondary)
     //                        .frame(width: 30, height: 30)
-    //                        .background(Color(.systemGray5))
+    //                        .background(Color.secondarySystemFill)
     //                        .clipShape(Circle())
     //                }
     //            }
@@ -119,12 +121,17 @@ struct FormatMenuSheet: View {
 
                         // Standalone highlight button with navigation to color picker
                         NavigationLink(value: FormatDestination.highlightColorPicker) {
+                            let isHighlightActive = activeFormats.contains(where: { if case .highlight = $0 { return true }; return false })
                             Image(systemName: "highlighter")
                                 .font(.system(size: 20, weight: .regular))
-                                .foregroundStyle(activeFormats.contains(where: { if case .highlight = $0 { return true }; return false }) ? Color.accentColor : .primary)
+                                .foregroundStyle(isHighlightActive ? Color.accentColor : .primary)
                                 .frame(width: 44, height: 44)
                         }
-                        .background(activeFormats.contains(where: { if case .highlight = $0 { return true }; return false }) ? Color.accentColor.opacity(0.15) : Color(.systemGray5))
+                        .background(
+                            activeFormats.contains(where: { if case .highlight = $0 { return true }; return false })
+                                ? Color.accentColor.opacity(0.15)
+                                : Color.secondarySystemFill
+                        )
                         .clipShape(Capsule())
 
                         // Standalone color button with navigation to color picker
@@ -182,7 +189,7 @@ struct FormatMenuSheet: View {
                 .padding(.vertical, 10)
             }
             .navigationTitle("Format")
-            .navigationBarTitleDisplayMode(.inline)
+            .adaptiveNavigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -215,7 +222,7 @@ struct FormatMenuSheet: View {
                 }
             }
         }
-        .background(Color(.systemBackground))
+        .background(Color.systemBackground)
     }
 
     // MARK: - Helper Methods
@@ -281,7 +288,7 @@ private struct FormattingButtonGroup: View {
                 }
             }
         }
-        .background(Color(.systemGray5))
+        .background(Color.secondarySystemFill)
         .clipShape(Capsule())
     }
 }
@@ -331,8 +338,8 @@ private struct ColorPickerView: View {
         }
         .frame(maxHeight: .infinity)
         .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .background(Color(.systemBackground))
+        .adaptiveNavigationBarTitleDisplayMode(.inline)
+        .background(Color.systemBackground)
     }
 }
 
@@ -348,3 +355,5 @@ private struct ColorPickerView: View {
     )
     .presentationDetents([.height(280)])
 }
+
+#endif // os(iOS)
