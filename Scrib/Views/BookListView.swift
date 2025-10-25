@@ -286,7 +286,7 @@ struct BookRowView: View {
                 }
             }
         }
-        .padding(.vertical, 4)
+//        .padding(.vertical, 4)
     }
 }
 
