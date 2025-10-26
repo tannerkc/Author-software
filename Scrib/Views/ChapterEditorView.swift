@@ -79,6 +79,14 @@ struct ChapterEditorView: View {
     /// Show export sheet
     @State private var showingExportSheet = false
 
+    #if os(macOS)
+    /// Inspector visibility state (persisted)
+    @AppStorage("isInspectorVisible") private var isInspectorVisibleStorage: Bool = false
+
+    /// Inspector presentation state
+    @State private var isInspectorPresented: Bool = false
+    #endif
+
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Rich Text Editor (Apple Notes style)
@@ -121,6 +129,11 @@ struct ChapterEditorView: View {
             }
 
             loadChapterContent(chapter)
+
+            #if os(macOS)
+            // Sync AppStorage to State for inspector visibility
+            isInspectorPresented = isInspectorVisibleStorage
+            #endif
         }
         .onDisappear {
             // CRITICAL: Force save when navigating away to ensure no data loss
@@ -132,6 +145,12 @@ struct ChapterEditorView: View {
                 forceSave(chapter)
             }
         }
+        #if os(macOS)
+        .onChange(of: isInspectorPresented) { _, newValue in
+            // Persist inspector visibility state
+            isInspectorVisibleStorage = newValue
+        }
+        #endif
         #if os(iOS)
         .sheet(isPresented: $showingFormatMenu) {
             FormatMenuSheet(
@@ -239,8 +258,33 @@ struct ChapterEditorView: View {
                 }
                 .keyboardShortcut("s", modifiers: .command)
             }
+
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    isInspectorPresented.toggle()
+                } label: {
+                    Label("Inspector", systemImage: "sidebar.right")
+                }
+                .keyboardShortcut("i", modifiers: [.command, .option])
+                .help("Toggle Inspector")
+            }
             #endif
         }
+        #if os(macOS)
+        .inspector(isPresented: $isInspectorPresented) {
+            if let book = chapter.book {
+                InspectorView(
+                    book: book,
+                    chapter: chapter,
+                    onChapterSelect: { selectedChapter in
+                        // Handle chapter selection from outline
+                        // This would navigate to the selected chapter in the main view
+                        print("Selected chapter from inspector: \(selectedChapter.extractedTitle)")
+                    }
+                )
+            }
+        }
+        #endif
     }
 
     // MARK: - Format Actions
