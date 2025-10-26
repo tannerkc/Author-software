@@ -21,8 +21,8 @@ struct BookListView: View {
     /// Array of all books
     let books: [Book]
 
-    /// Currently selected book (two-way binding)
-    @Binding var selection: Book?
+    /// Currently selected book ID (UUID-based for stable macOS selection)
+    @Binding var selection: UUID?
 
     /// View model for book operations
     @State private var viewModel: BookViewModel?
@@ -54,51 +54,15 @@ struct BookListView: View {
     var body: some View {
         List(selection: $selection) {
             ForEach(filteredBooks) { book in
-                BookRowView(book: book)
-                    .tag(book)
-                    .transition(.opacity.combined(with: .move(edge: .leading)))
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            deleteBook(book)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .contextMenu {
-                        Button {
-                            bookToRename = book
-                            newBookTitle = book.title
-                            newBookGenre = book.genre
-                            showingRenameAlert = true
-                        } label: {
-                            Label("Rename", systemImage: "pencil")
-                        }
-
-                        Button {
-                            duplicateBook(book)
-                        } label: {
-                            Label("Duplicate", systemImage: "doc.on.doc")
-                        }
-
-                        Button {
-                            bookToExport = book
-                            showingExportSheet = true
-                        } label: {
-                            Label("Export Book", systemImage: "square.and.arrow.up")
-                        }
-
-                        Divider()
-
-                        Button(role: .destructive) {
-                            deleteBook(book)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
+                bookListRow(for: book)
             }
         }
         .navigationTitle("Books")
+        #if os(iOS)
+        // Only show searchable on iOS - macOS NavigationSplitView merges toolbars,
+        // causing duplicate search items when ChapterListView also has searchable
         .searchable(text: $searchText, prompt: "Search Books")
+        #endif
         .toolbar {
             #if os(iOS)
             // Top toolbar: New Book button first, then Edit button
@@ -200,7 +164,7 @@ struct BookListView: View {
         guard !newBookTitle.isEmpty else { return }
 
         let book = viewModel?.createBook(title: newBookTitle, genre: newBookGenre)
-        selection = book
+        selection = book?.id
 
         showingNewBookSheet = false
         resetNewBookFields()
@@ -217,7 +181,7 @@ struct BookListView: View {
     /// Delete a book
     private func deleteBook(_ book: Book) {
         // Clear selection if deleting the selected book
-        if selection?.id == book.id {
+        if selection == book.id {
             selection = nil
         }
 
@@ -227,7 +191,7 @@ struct BookListView: View {
     /// Duplicate a book
     private func duplicateBook(_ book: Book) {
         let newBook = viewModel?.duplicateBook(book)
-        selection = newBook
+        selection = newBook?.id
     }
 
     /// Reset the new book form fields
@@ -235,6 +199,56 @@ struct BookListView: View {
         newBookTitle = ""
         newBookGenre = "General"
         bookToRename = nil
+    }
+
+    // MARK: - View Builders
+
+    /// Creates a book list row with platform-specific navigation
+    @ViewBuilder
+    private func bookListRow(for book: Book) -> some View {
+        // macOS NavigationSplitView uses plain rows with .tag(), NOT NavigationLink
+        // NavigationLink is for iOS navigation stacks
+        BookRowView(book: book)
+            .tag(book.id)  // Selection binding pattern for macOS
+            .transition(.opacity.combined(with: .move(edge: .leading)))
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                deleteBook(book)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .contextMenu {
+            Button {
+                bookToRename = book
+                newBookTitle = book.title
+                newBookGenre = book.genre
+                showingRenameAlert = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+
+            Button {
+                duplicateBook(book)
+            } label: {
+                Label("Duplicate", systemImage: "doc.on.doc")
+            }
+
+            Button {
+                bookToExport = book
+                showingExportSheet = true
+            } label: {
+                Label("Export Book", systemImage: "square.and.arrow.up")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                deleteBook(book)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 }
 
@@ -286,7 +300,9 @@ struct BookRowView: View {
                 }
             }
         }
-//        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)  // Fill width for full clickable area
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())  // Make entire row clickable including empty space
     }
 }
 

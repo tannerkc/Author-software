@@ -147,7 +147,7 @@ struct CharactersAndScenesSection: View {
                 }
                 .font(.system(size: 10))
                 .buttonStyle(.plain)
-                .foregroundStyle(.accentColor)
+                .foregroundColor(.accentColor)
             }
         }
         .frame(maxWidth: .infinity)
@@ -247,7 +247,7 @@ struct CharactersAndScenesSection: View {
                 }
                 .font(.system(size: 10))
                 .buttonStyle(.plain)
-                .foregroundStyle(.accentColor)
+                .foregroundColor(.accentColor)
             }
         }
         .frame(maxWidth: .infinity)

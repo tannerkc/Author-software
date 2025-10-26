@@ -33,7 +33,7 @@ struct ResearchItemCard: View {
     /// Derived PDF thumbnail (if PDF type)
     private var pdfThumbnail: NSImage? {
         guard item.itemType == .pdf,
-              let data = item.attachmentData else {
+              let _ = item.attachmentData else {
             return nil
         }
         // Basic PDF thumbnail generation would go here

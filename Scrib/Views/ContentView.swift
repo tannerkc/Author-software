@@ -24,21 +24,34 @@ struct ContentView: View {
     /// All books, sorted by last modified (most recent first)
     @Query(sort: \Book.lastModified, order: .reverse) private var books: [Book]
 
-    /// Currently selected book
-    @State private var selectedBook: Book?
+    /// Currently selected book ID (UUID-based for stable macOS selection)
+    @State private var selectedBookId: UUID?
 
-    /// Currently selected chapter
-    @State private var selectedChapter: Chapter?
+    /// Currently selected chapter ID (UUID-based for stable macOS selection)
+    @State private var selectedChapterId: UUID?
 
     /// Column visibility state
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+
+    /// Look up the currently selected book from its ID
+    private var selectedBook: Book? {
+        guard let id = selectedBookId else { return nil }
+        return books.first(where: { $0.id == id })
+    }
+
+    /// Look up the currently selected chapter from its ID
+    private var selectedChapter: Chapter? {
+        guard let id = selectedChapterId,
+              let book = selectedBook else { return nil }
+        return book.chapters.first(where: { $0.id == id })
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             // MARK: - Sidebar (Books)
             BookListView(
                 books: books,
-                selection: $selectedBook
+                selection: $selectedBookId
             )
             .navigationSplitViewColumnWidth(
                 min: 200,
@@ -47,10 +60,12 @@ struct ContentView: View {
             )
         } content: {
             // MARK: - Content (Chapters)
+            // Direct conditional view - ZStack workaround no longer needed in modern SwiftUI
+            // and was blocking selection interaction on macOS
             if let book = selectedBook {
                 ChapterListView(
                     book: book,
-                    selection: $selectedChapter
+                    selection: $selectedChapterId
                 )
                 .navigationSplitViewColumnWidth(
                     min: 200,
@@ -68,6 +83,7 @@ struct ContentView: View {
             // MARK: - Detail (Editor)
             if let chapter = selectedChapter {
                 ChapterEditorView(chapter: chapter)
+                    .id(chapter.id)  // Force view rebuild when selection changes (SwiftData fix)
             } else if selectedBook != nil {
                 ContentUnavailableView(
                     "No Chapter Selected",

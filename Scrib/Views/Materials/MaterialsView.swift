@@ -42,7 +42,9 @@ struct MaterialsView: View {
                             .tag(tab)
                     }
                 }
+                #if os(iOS)
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                #endif
             }
             .navigationTitle("Materials")
             .adaptiveNavigationBarTitleDisplayMode(.inline)

@@ -17,6 +17,8 @@ struct NoteEditorView: View {
 
     @State private var attributedContent: NSAttributedString
     @State private var showFormatMenu = false
+    @State private var textSelection: NSRange = NSRange(location: 0, length: 0)
+    @FocusState private var isEditorFocused: Bool
     @State private var autoSaveTask: Task<Void, Never>?
 
     init(note: Note, viewModel: MaterialViewModel) {
@@ -29,8 +31,9 @@ struct NoteEditorView: View {
         NavigationStack {
             RichTextEditor(
                 attributedText: $attributedContent,
-                showFormatMenu: $showFormatMenu,
-                placeholderText: "Start writing your note..."
+                selectedRange: $textSelection,
+                isFocused: $isEditorFocused,
+                isEditable: true
             )
             .onChange(of: attributedContent) { _, newValue in
                 scheduleAutoSave(newValue)

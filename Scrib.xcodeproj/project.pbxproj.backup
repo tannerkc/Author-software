@@ -25,12 +25,14 @@
 		6C17D2992EAEACF300EA2C6B /* ChapterMetadataSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2782EAEACF300EA2C6B /* ChapterMetadataSheet.swift */; };
 		6C17D29A2EAEACF300EA2C6B /* ResearchEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D28D2EAEACF300EA2C6B /* ResearchEditorView.swift */; };
 		6C17D29B2EAEACF300EA2C6B /* CharactersAndScenesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2842EAEACF300EA2C6B /* CharactersAndScenesSection.swift */; };
+		6C17D29C2EAEACF300EA2C6B /* CollapsibleSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D27A2EAEACF300EA2C6B /* CollapsibleSection.swift */; };
 		6C17D29D2EAEACF300EA2C6B /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D28B2EAEACF300EA2C6B /* NoteEditorView.swift */; };
 		6C17D29E2EAEACF300EA2C6B /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2852EAEACF300EA2C6B /* InspectorView.swift */; };
 		6C17D29F2EAEACF300EA2C6B /* BookOutlineSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2822EAEACF300EA2C6B /* BookOutlineSection.swift */; };
 		6C17D2A02EAEACF300EA2C6B /* MaterialsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D28A2EAEACF300EA2C6B /* MaterialsView.swift */; };
 		6C17D2A12EAEACF300EA2C6B /* CharacterListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2892EAEACF300EA2C6B /* CharacterListView.swift */; };
 		6C17D2A22EAEACF300EA2C6B /* SceneEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D28F2EAEACF300EA2C6B /* SceneEditorView.swift */; };
+		6C17D2A32EAEACF300EA2C6B /* ResearchItemCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D27D2EAEACF300EA2C6B /* ResearchItemCard.swift */; };
 		6C17D2A42EAEACF300EA2C6B /* FormatMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D27B2EAEACF300EA2C6B /* FormatMenuSheet.swift */; };
 		6C17D2A52EAEACF300EA2C6B /* ResearchItemsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2862EAEACF300EA2C6B /* ResearchItemsSection.swift */; };
 		6C17D2A62EAEACF300EA2C6B /* CharacterMarkerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2792EAEACF300EA2C6B /* CharacterMarkerSheet.swift */; };
@@ -52,11 +54,18 @@
 		A013 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B013 /* Date+Extensions.swift */; };
 		A014 /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B014 /* Color+Extensions.swift */; };
 		A015 /* ChapterMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = B015 /* ChapterMetadata.swift */; };
+		A016 /* AdaptiveKeyboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B016 /* AdaptiveKeyboardToolbar.swift */; };
+		A017 /* CharacterMarkerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B017 /* CharacterMarkerSheet.swift */; };
+		A018 /* InlineNoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B018 /* InlineNoteSheet.swift */; };
+		A019 /* ChapterMetadataSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B019 /* ChapterMetadataSheet.swift */; };
+		A020 /* FormatMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B020 /* FormatMenuSheet.swift */; };
+		A021 /* RichTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B021 /* RichTextEditor.swift */; };
 		A022 /* ExportMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = B022 /* ExportMetadata.swift */; };
 		A023 /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B023 /* ExportManager.swift */; };
 		A024 /* PDFExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B024 /* PDFExporter.swift */; };
 		A025 /* DOCXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B025 /* DOCXExporter.swift */; };
 		A026 /* EPUBExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B026 /* EPUBExporter.swift */; };
+		A027 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B027 /* ExportView.swift */; };
 		A028 /* Color+Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = B028 /* Color+Platform.swift */; };
 		A029 /* View+Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = B029 /* View+Platform.swift */; };
 		A030 /* EditMode+macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B030 /* EditMode+macOS.swift */; };
@@ -145,14 +154,6 @@
 		B102 /* ChapterModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterModelTests.swift; sourceTree = "<group>"; };
 		P001 /* Scrib.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrib.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P002 /* ScribTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B0540B622A777FBEC7F395C8 /* InspectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorViewModel.swift; sourceTree = "<group>"; };
-		A399B2B3075EFF101BB8EDC3 /* CollapsibleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapsibleSection.swift; sourceTree = "<group>"; };
-		6D5AE01CC1F9BDA062A10636 /* ResearchItemCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchItemCard.swift; sourceTree = "<group>"; };
-		35CF30181DE8E1E66E3C080F /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
-		D55982D4F1830FC1D80ABB9F /* BookOutlineSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookOutlineSection.swift; sourceTree = "<group>"; };
-		7F32FF5B46BF7DD5CDA339CB /* ChapterMetadataSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMetadataSection.swift; sourceTree = "<group>"; };
-		054DA17A9401A7F9812FB705 /* CharactersAndScenesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharactersAndScenesSection.swift; sourceTree = "<group>"; };
-		2B9D2D81621E930222B18F4D /* ResearchItemsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchItemsSection.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,8 +186,6 @@
 				6C17D27C2EAEACF300EA2C6B /* InlineNoteSheet.swift */,
 				6C17D27D2EAEACF300EA2C6B /* ResearchItemCard.swift */,
 				6C17D27E2EAEACF300EA2C6B /* RichTextEditor.swift */,
-				A399B2B3075EFF101BB8EDC3 /* CollapsibleSection.swift */,
-				6D5AE01CC1F9BDA062A10636 /* ResearchItemCard.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -300,7 +299,6 @@
 				B012 /* SettingsView.swift */,
 				G020 /* Components */,
 				G021 /* Export */,
-				153E95379BBD3BD87644EC12 /* Inspector */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -312,7 +310,6 @@
 				6C17D26F2EAEAC7000EA2C6B /* MaterialViewModel.swift */,
 				B007 /* BookViewModel.swift */,
 				B008 /* ChapterViewModel.swift */,
-				B0540B622A777FBEC7F395C8 /* InspectorViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -405,18 +402,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-153E95379BBD3BD87644EC12 /* Inspector */ = {
-	isa = PBXGroup;
-	children = (
-		35CF30181DE8E1E66E3C080F /* InspectorView.swift */,
-				D55982D4F1830FC1D80ABB9F /* BookOutlineSection.swift */,
-				7F32FF5B46BF7DD5CDA339CB /* ChapterMetadataSection.swift */,
-				054DA17A9401A7F9812FB705 /* CharactersAndScenesSection.swift */,
-				2B9D2D81621E930222B18F4D /* ResearchItemsSection.swift */,
-	);
-	path = Inspector;
-	sourceTree = "<group>";
-};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -523,12 +508,14 @@
 				6C17D2992EAEACF300EA2C6B /* ChapterMetadataSheet.swift in Sources */,
 				6C17D29A2EAEACF300EA2C6B /* ResearchEditorView.swift in Sources */,
 				6C17D29B2EAEACF300EA2C6B /* CharactersAndScenesSection.swift in Sources */,
+				6C17D29C2EAEACF300EA2C6B /* CollapsibleSection.swift in Sources */,
 				6C17D29D2EAEACF300EA2C6B /* NoteEditorView.swift in Sources */,
 				6C17D29E2EAEACF300EA2C6B /* InspectorView.swift in Sources */,
 				6C17D29F2EAEACF300EA2C6B /* BookOutlineSection.swift in Sources */,
 				6C17D2A02EAEACF300EA2C6B /* MaterialsView.swift in Sources */,
 				6C17D2A12EAEACF300EA2C6B /* CharacterListView.swift in Sources */,
 				6C17D2A22EAEACF300EA2C6B /* SceneEditorView.swift in Sources */,
+				6C17D2A32EAEACF300EA2C6B /* ResearchItemCard.swift in Sources */,
 				6C17D2A42EAEACF300EA2C6B /* FormatMenuSheet.swift in Sources */,
 				6C17D2A52EAEACF300EA2C6B /* ResearchItemsSection.swift in Sources */,
 				6C17D2A62EAEACF300EA2C6B /* CharacterMarkerSheet.swift in Sources */,
@@ -546,6 +533,12 @@
 				A010 /* ChapterListView.swift in Sources */,
 				A011 /* ChapterEditorView.swift in Sources */,
 				A012 /* SettingsView.swift in Sources */,
+				A016 /* AdaptiveKeyboardToolbar.swift in Sources */,
+				A017 /* CharacterMarkerSheet.swift in Sources */,
+				A018 /* InlineNoteSheet.swift in Sources */,
+				A019 /* ChapterMetadataSheet.swift in Sources */,
+				A020 /* FormatMenuSheet.swift in Sources */,
+				A021 /* RichTextEditor.swift in Sources */,
 				A013 /* Date+Extensions.swift in Sources */,
 				A014 /* Color+Extensions.swift in Sources */,
 				A022 /* ExportMetadata.swift in Sources */,
@@ -559,11 +552,11 @@
 				6C17D26D2EAC227700EA2C6B /* ResearchItem.swift in Sources */,
 				6C17D2742EAEAC8E00EA2C6B /* CollapsibleSection.swift in Sources */,
 				6C17D2752EAEAC8E00EA2C6B /* ResearchItemCard.swift in Sources */,
+				A027 /* ExportView.swift in Sources */,
 				A028 /* Color+Platform.swift in Sources */,
 				A029 /* View+Platform.swift in Sources */,
 				A030 /* EditMode+macOS.swift in Sources */,
 				A031 /* PlatformConfiguration.swift in Sources */,
-			
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

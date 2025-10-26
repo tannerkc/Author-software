@@ -138,7 +138,7 @@ struct ResearchItemsSection: View {
                 }
                 .font(.system(size: 11))
                 .buttonStyle(.plain)
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(.blue)
             }
         }
         .frame(maxWidth: .infinity)

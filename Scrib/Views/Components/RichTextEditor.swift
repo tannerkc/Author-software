@@ -507,7 +507,14 @@ struct RichTextEditor: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
-        let textView = scrollView.documentView as! NSTextView
+
+        // Safe unwrap to prevent crash if documentView is not NSTextView
+        guard let textView = scrollView.documentView as? NSTextView else {
+            print("⚠️ CRITICAL: NSTextView.scrollableTextView() did not return NSTextView as documentView")
+            // Return the scroll view anyway, updateNSView will handle it
+            return scrollView
+        }
+
         textView.delegate = context.coordinator
         textView.isEditable = isEditable
         textView.isRichText = true
@@ -517,9 +524,16 @@ struct RichTextEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
-        if textView.attributedString() != attributedText {
+
+        // CRITICAL: Update coordinator's parent reference to prevent stale struct references
+        // The parent struct is recreated on every SwiftUI update, but coordinator persists
+        context.coordinator.parent = self
+
+        // Use proper NSAttributedString comparison to prevent crashes and infinite loops
+        if !textView.attributedString().isEqual(to: attributedText) {
             textView.textStorage?.setAttributedString(attributedText)
         }
+
         textView.isEditable = isEditable
     }
 

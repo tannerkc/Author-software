@@ -22,8 +22,8 @@ struct InspectorView: View {
     /// The currently selected chapter (optional)
     let chapter: Chapter?
 
-    /// View model for inspector operations
-    @State var viewModel: InspectorViewModel
+    /// View model for inspector operations (initialized in onAppear)
+    @State var viewModel: InspectorViewModel?
 
     /// Action to navigate to a chapter
     let onChapterSelect: (Chapter) -> Void
@@ -44,26 +44,32 @@ struct InspectorView: View {
         self.book = book
         self.chapter = chapter
         self.onChapterSelect = onChapterSelect
-        // ViewModel will be initialized in onAppear with the environment's modelContext
-        self._viewModel = State(initialValue: InspectorViewModel(modelContext: ModelContext(.init(for: Book.self))))
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header with scope picker
-                header
+        Group {
+            if let viewModel = viewModel {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Header with scope picker
+                        header(viewModel: viewModel)
 
-                // Content based on scope
-                content
+                        // Content based on scope
+                        content(viewModel: viewModel)
+                    }
+                    .padding(16)
+                }
+            } else {
+                // Loading placeholder
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(16)
         }
         .frame(minWidth: 280, idealWidth: 320)
         .background(.background)
         .onAppear {
             // Initialize viewModel with the correct modelContext
-            if viewModel.self.hashValue == 0 {
+            if viewModel == nil {
                 viewModel = InspectorViewModel(modelContext: modelContext)
             }
         }
@@ -71,7 +77,8 @@ struct InspectorView: View {
 
     // MARK: - Header
 
-    private var header: some View {
+    @ViewBuilder
+    private func header(viewModel: InspectorViewModel) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             // Title
             Text("Inspector")
@@ -79,17 +86,21 @@ struct InspectorView: View {
                 .foregroundStyle(.primary)
 
             // Scope picker
-            scopePicker
+            scopePicker(viewModel: viewModel)
 
             // Search field (if applicable)
             if viewModel.scope == .book {
-                searchField
+                searchField(viewModel: viewModel)
             }
         }
     }
 
-    private var scopePicker: some View {
-        Picker("Scope", selection: $viewModel.scope) {
+    @ViewBuilder
+    private func scopePicker(viewModel: InspectorViewModel) -> some View {
+        Picker("Scope", selection: Binding(
+            get: { viewModel.scope },
+            set: { viewModel.scope = $0 }
+        )) {
             ForEach(InspectorScope.allCases) { scope in
                 Label(scope.rawValue, systemImage: scope.icon)
                     .tag(scope)
@@ -99,15 +110,19 @@ struct InspectorView: View {
         .labelsHidden()
     }
 
-    private var searchField: some View {
+    @ViewBuilder
+    private func searchField(viewModel: InspectorViewModel) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
 
-            TextField("Search materials...", text: $viewModel.searchText)
-                .textFieldStyle(.plain)
-                .font(.system(size: 12))
+            TextField("Search materials...", text: Binding(
+                get: { viewModel.searchText },
+                set: { viewModel.searchText = $0 }
+            ))
+            .textFieldStyle(.plain)
+            .font(.system(size: 12))
 
             if !viewModel.searchText.isEmpty {
                 Button {
@@ -131,19 +146,20 @@ struct InspectorView: View {
     // MARK: - Content
 
     @ViewBuilder
-    private var content: some View {
+    private func content(viewModel: InspectorViewModel) -> some View {
         switch viewModel.scope {
         case .book:
-            bookScopeContent
+            bookScopeContent(viewModel: viewModel)
         case .chapter:
-            chapterScopeContent
+            chapterScopeContent(viewModel: viewModel)
         }
     }
 
-    private var bookScopeContent: some View {
+    @ViewBuilder
+    private func bookScopeContent(viewModel: InspectorViewModel) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             // Outline - shows all chapters
-            BookOutlineSection(
+            BookOutlineSectionView(
                 book: book,
                 selectedChapter: chapter,
                 viewModel: viewModel,
@@ -153,7 +169,7 @@ struct InspectorView: View {
             Divider()
 
             // Research items
-            ResearchItemsSection(
+            ResearchItemsSectionView(
                 book: book,
                 viewModel: viewModel
             )
@@ -161,7 +177,7 @@ struct InspectorView: View {
             Divider()
 
             // Characters and scenes
-            CharactersAndScenesSection(
+            CharactersAndScenesSectionView(
                 book: book,
                 viewModel: viewModel
             )
@@ -169,14 +185,15 @@ struct InspectorView: View {
             Divider()
 
             // Notes section (if needed)
-            notesSection
+            notesSection(viewModel: viewModel)
         }
     }
 
-    private var chapterScopeContent: some View {
+    @ViewBuilder
+    private func chapterScopeContent(viewModel: InspectorViewModel) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             // Chapter metadata
-            ChapterMetadataSection(
+            ChapterMetadataSectionView(
                 chapter: chapter,
                 viewModel: viewModel
             )
@@ -185,7 +202,7 @@ struct InspectorView: View {
                 Divider()
 
                 // Quick access to related characters
-                relatedCharactersSection
+                relatedCharactersSection(viewModel: viewModel)
 
                 Divider()
 
@@ -197,22 +214,27 @@ struct InspectorView: View {
 
     // MARK: - Additional Sections
 
-    private var notesSection: some View {
+    @ViewBuilder
+    private func notesSection(viewModel: InspectorViewModel) -> some View {
         CollapsibleSection(
             "Notes",
             icon: "note.text",
             count: viewModel.fetchNotes(for: book).count,
-            isExpanded: $viewModel.isNotesExpanded
+            isExpanded: Binding(
+                get: { viewModel.isNotesExpanded },
+                set: { viewModel.isNotesExpanded = $0 }
+            )
         ) {
             if viewModel.fetchNotes(for: book).isEmpty {
                 emptyNotesState
             } else {
-                notesList
+                notesList(viewModel: viewModel)
             }
         }
     }
 
-    private var notesList: some View {
+    @ViewBuilder
+    private func notesList(viewModel: InspectorViewModel) -> some View {
         LazyVStack(spacing: 8) {
             ForEach(viewModel.fetchNotes(for: book).sorted(), id: \.id) { note in
                 NoteCard(note: note)
@@ -234,34 +256,33 @@ struct InspectorView: View {
         .padding(.vertical, 16)
     }
 
-    private var relatedCharactersSection: some View {
-        Group {
-            if let chapter = chapter, let metadata = chapter.metadata, !metadata.povCharacter.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label {
-                        Text("POV Character")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .textCase(.uppercase)
-                    } icon: {
-                        Image(systemName: "person.circle")
-                            .font(.system(size: 10))
-                    }
+    @ViewBuilder
+    private func relatedCharactersSection(viewModel: InspectorViewModel) -> some View {
+        if let chapter = chapter, let metadata = chapter.metadata, !metadata.povCharacter.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Label {
+                    Text("POV Character")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                } icon: {
+                    Image(systemName: "person.circle")
+                        .font(.system(size: 10))
+                }
 
-                    // Find matching character
-                    if let character = viewModel.fetchCharacters(for: book).first(where: { $0.name == metadata.povCharacter }) {
-                        CharacterQuickView(character: character)
-                    } else {
-                        Text(metadata.povCharacter)
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background {
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.quaternary.opacity(0.3))
-                            }
-                    }
+                // Find matching character
+                if let character = viewModel.fetchCharacters(for: book).first(where: { $0.name == metadata.povCharacter }) {
+                    CharacterQuickView(character: character)
+                } else {
+                    Text(metadata.povCharacter)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(.quaternary.opacity(0.3))
+                        }
                 }
             }
         }
@@ -445,18 +466,62 @@ private struct CharacterQuickView: View {
     container.mainContext.insert(chapter)
     container.mainContext.insert(metadata)
 
-    let inspectorView = InspectorView(
+    return InspectorView(
         book: book,
         chapter: chapter,
         onChapterSelect: { _ in }
     )
+    .frame(width: 320, height: 800)
+    .modelContainer(container)
+}
 
-    // Set scope to chapter
-    let _ = inspectorView.viewModel.switchScope(to: .chapter)
+// MARK: - Wrapper Views for Sections
 
-    return inspectorView
-        .frame(width: 320, height: 800)
-        .modelContainer(container)
+/// Wrapper to convert non-@Bindable viewModel to @Bindable for BookOutlineSection
+private struct BookOutlineSectionView: View {
+    let book: Book
+    let selectedChapter: Chapter?
+    @Bindable var viewModel: InspectorViewModel
+    let onChapterSelect: (Chapter) -> Void
+
+    var body: some View {
+        BookOutlineSection(
+            book: book,
+            selectedChapter: selectedChapter,
+            viewModel: $viewModel,
+            onChapterSelect: onChapterSelect
+        )
+    }
+}
+
+/// Wrapper to convert non-@Bindable viewModel to @Bindable for ResearchItemsSection
+private struct ResearchItemsSectionView: View {
+    let book: Book
+    @Bindable var viewModel: InspectorViewModel
+
+    var body: some View {
+        ResearchItemsSection(book: book, viewModel: $viewModel)
+    }
+}
+
+/// Wrapper to convert non-@Bindable viewModel to @Bindable for CharactersAndScenesSection
+private struct CharactersAndScenesSectionView: View {
+    let book: Book
+    @Bindable var viewModel: InspectorViewModel
+
+    var body: some View {
+        CharactersAndScenesSection(book: book, viewModel: $viewModel)
+    }
+}
+
+/// Wrapper to convert non-@Bindable viewModel to @Bindable for ChapterMetadataSection
+private struct ChapterMetadataSectionView: View {
+    let chapter: Chapter?
+    @Bindable var viewModel: InspectorViewModel
+
+    var body: some View {
+        ChapterMetadataSection(chapter: chapter, viewModel: $viewModel)
+    }
 }
 
 #endif

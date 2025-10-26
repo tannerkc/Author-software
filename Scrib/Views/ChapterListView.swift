@@ -23,8 +23,8 @@ struct ChapterListView: View {
     /// The book whose chapters are being displayed
     let book: Book
 
-    /// Currently selected chapter (two-way binding)
-    @Binding var selection: Chapter?
+    /// Currently selected chapter ID (UUID-based for stable macOS selection)
+    @Binding var selection: UUID?
 
     /// View model for chapter operations
     @State private var viewModel: ChapterViewModel?
@@ -53,6 +53,9 @@ struct ChapterListView: View {
     /// Controls banner animation on appear
     @State private var showMaterialsBanner = false
 
+    /// Task for animating banner (can be cancelled to prevent memory issues)
+    @State private var bannerAnimationTask: Task<Void, Never>?
+
     // MARK: - Metadata Filters
 
     /// Filter by POV character
@@ -67,46 +70,22 @@ struct ChapterListView: View {
     var body: some View {
         List(selection: $selection) {
             ForEach(filteredChapters) { chapter in
-                ChapterRowView(chapter: chapter)
-                    .tag(chapter)
-                    .id(chapter.id) // iOS 26: Explicit ID for scroll performance
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            deleteChapter(chapter)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .contextMenu {
-                        Button {
-                            chapterToRename = chapter
-                            chapterTitle = chapter.title
-                            showingRenameAlert = true
-                        } label: {
-                            Label("Rename", systemImage: "pencil")
-                        }
-
-                        Button {
-                            duplicateChapter(chapter)
-                        } label: {
-                            Label("Duplicate", systemImage: "doc.on.doc")
-                        }
-
-                        Divider()
-
-                        Button(role: .destructive) {
-                            deleteChapter(chapter)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
+                chapterListRow(for: chapter)
             }
+            #if os(iOS)
+            // Only enable drag-to-reorder on iOS
+            // macOS: .onMove gesture recognizer blocks List selection (documented SwiftUI bug)
             .onMove { source, destination in
                 reorderChapters(from: source, to: destination)
             }
+            #endif
         }
+        #if os(macOS)
+        .listStyle(.inset)  // Inset style appropriate for content column selection on macOS
+        #endif
+        #if os(iOS)
         .scrollContentBackground(.hidden) // iOS 26: Enable Liquid Glass transparency
+        #endif
         .searchable(text: $searchText, prompt: "Search Chapters")
         .navigationTitle(book.title)
         .toolbar {
@@ -277,12 +256,20 @@ struct ChapterListView: View {
                 viewModel = ChapterViewModel(modelContext: modelContext)
             }
 
-            // Animate banner in with delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Animate banner in with delay (using Task for proper cleanup)
+            bannerAnimationTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
+
                 withAnimation(.spring()) {
                     showMaterialsBanner = true
                 }
             }
+        }
+        .onDisappear {
+            // Cancel any pending banner animation to prevent crash on deallocated view
+            bannerAnimationTask?.cancel()
+            bannerAnimationTask = nil
         }
     }
 
@@ -349,7 +336,7 @@ struct ChapterListView: View {
             in: book,
             title: chapterTitle
         )
-        selection = chapter
+        selection = chapter?.id
 
         showingNewChapterSheet = false
         chapterTitle = ""
@@ -368,7 +355,7 @@ struct ChapterListView: View {
     /// Delete a chapter
     private func deleteChapter(_ chapter: Chapter) {
         // Clear selection if deleting the selected chapter
-        if selection?.id == chapter.id {
+        if selection == chapter.id {
             selection = nil
         }
 
@@ -378,7 +365,7 @@ struct ChapterListView: View {
     /// Duplicate a chapter
     private func duplicateChapter(_ chapter: Chapter) {
         let newChapter = viewModel?.duplicateChapter(chapter)
-        selection = newChapter
+        selection = newChapter?.id
     }
 
     /// Reorder chapters
@@ -466,6 +453,49 @@ struct ChapterListView: View {
             }
         }
     }
+
+    // MARK: - View Builders
+
+    /// Creates a chapter list row with platform-specific navigation
+    @ViewBuilder
+    private func chapterListRow(for chapter: Chapter) -> some View {
+        // macOS NavigationSplitView uses plain rows with .tag(), NOT NavigationLink
+        // NavigationLink is for iOS navigation stacks
+        ChapterRowView(chapter: chapter)
+            .tag(chapter.id)  // Selection binding pattern for macOS
+            .id(chapter.id)
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                deleteChapter(chapter)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .contextMenu {
+            Button {
+                chapterToRename = chapter
+                chapterTitle = chapter.title
+                showingRenameAlert = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+
+            Button {
+                duplicateChapter(chapter)
+            } label: {
+                Label("Duplicate", systemImage: "doc.on.doc")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                deleteChapter(chapter)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
 }
 
 // MARK: - Chapter Row View
@@ -520,7 +550,9 @@ struct ChapterRowView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)  // Fill width for full clickable area
         .padding(.vertical, 4)
+        .contentShape(Rectangle())  // Make entire row clickable including empty space
     }
 
     // MARK: - Metadata Badges

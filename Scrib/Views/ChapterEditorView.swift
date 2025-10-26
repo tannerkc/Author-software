@@ -199,8 +199,10 @@ struct ChapterEditorView: View {
             } else {
                 // Restore keyboard when format menu closes
                 // Small delay ensures smooth animation transition
-                Task {
+                Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(100))
+                    // Check if task was cancelled (view disappeared)
+                    guard !Task.isCancelled else { return }
                     isEditorFocused = true
                 }
             }
@@ -510,8 +512,10 @@ struct ChapterEditorView: View {
         attributedText = chapter.getAttributedContent()
 
         // Auto-focus for immediate typing
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(100))
+            // Check if task was cancelled (view disappeared before sleep completed)
+            guard !Task.isCancelled else { return }
             isEditorFocused = true
         }
 
@@ -580,7 +584,12 @@ struct ChapterEditorView: View {
         chapter.setAttributedContent(text)
 
         // Update parent book's lastModified timestamp
-        chapter.book?.lastModified = Date()
+        // Safe access through relationship - verify it's still valid
+        if let parentBook = chapter.book {
+            parentBook.lastModified = Date()
+        } else {
+            print("⚠️ WARNING: Chapter has no parent book relationship during save")
+        }
 
         // Trigger SwiftData save
         do {

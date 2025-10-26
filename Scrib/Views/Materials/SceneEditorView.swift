@@ -18,6 +18,8 @@ struct SceneEditorView: View {
     @State private var attributedContent: NSAttributedString
     @State private var showFormatMenu = false
     @State private var showMetadata = false
+    @State private var textSelection: NSRange = NSRange(location: 0, length: 0)
+    @FocusState private var isEditorFocused: Bool
 
     @State private var autoSaveTask: Task<Void, Never>?
 
@@ -41,8 +43,9 @@ struct SceneEditorView: View {
                 // Editor
                 RichTextEditor(
                     attributedText: $attributedContent,
-                    showFormatMenu: $showFormatMenu,
-                    placeholderText: "Start writing your scene..."
+                    selectedRange: $textSelection,
+                    isFocused: $isEditorFocused,
+                    isEditable: true
                 )
                 .onChange(of: attributedContent) { _, newValue in
                     scheduleAutoSave(newValue)
