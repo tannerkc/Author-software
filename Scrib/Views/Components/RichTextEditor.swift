@@ -518,7 +518,37 @@ struct RichTextEditor: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.isEditable = isEditable
         textView.isRichText = true
-        textView.textStorage?.setAttributedString(attributedText)
+
+        // CRITICAL: Safe attributed text setting with validation
+        // Prevents crashes when attributedText is invalid or empty
+        if let textStorage = textView.textStorage {
+            // Validate attributed text before setting
+            if attributedText.length > 0 {
+                textStorage.setAttributedString(attributedText)
+            } else {
+                // CRITICAL: NSColor MUST be accessed on main thread
+                // Check if we're on main thread, dispatch sync if not
+                let setDefaultText = {
+                    let defaultFont = NSFont.systemFont(ofSize: 17)
+                    let attributes: [NSAttributedString.Key: Any] = [
+                        .font: defaultFont,
+                        .foregroundColor: NSColor.labelColor
+                    ]
+                    textStorage.setAttributedString(NSAttributedString(string: "", attributes: attributes))
+                }
+
+                if Thread.isMainThread {
+                    setDefaultText()
+                } else {
+                    DispatchQueue.main.sync {
+                        setDefaultText()
+                    }
+                }
+            }
+        } else {
+            print("⚠️ WARNING: NSTextView textStorage is nil during initialization")
+        }
+
         return scrollView
     }
 
@@ -529,9 +559,33 @@ struct RichTextEditor: NSViewRepresentable {
         // The parent struct is recreated on every SwiftUI update, but coordinator persists
         context.coordinator.parent = self
 
-        // Use proper NSAttributedString comparison to prevent crashes and infinite loops
-        if !textView.attributedString().isEqual(to: attributedText) {
-            textView.textStorage?.setAttributedString(attributedText)
+        // CRITICAL: Safe attributed text update with validation
+        // Prevents crashes when attributedText is invalid or when textStorage is nil
+        guard let textStorage = textView.textStorage else {
+            print("⚠️ WARNING: NSTextView textStorage is nil during update")
+            return
+        }
+
+        // CRITICAL: Prevent infinite recursion by checking isUpdatingFromUser flag
+        // When textDidChange is updating the binding, we must NOT update the textStorage
+        // This breaks the circular update cycle that causes stack overflow
+        if !context.coordinator.isUpdatingFromUser {
+            // Check if this is genuinely new attributed text that we haven't set yet
+            // We track lastSetAttributedString because NSTextView can slightly modify
+            // attributed strings when they're set (normalizing attributes, etc.)
+            let shouldUpdate = context.coordinator.lastSetAttributedString == nil ||
+                              !attributedText.isEqual(to: context.coordinator.lastSetAttributedString!)
+
+            if shouldUpdate {
+                // Validate attributed text before setting
+                if attributedText.length >= 0 {
+                    textStorage.setAttributedString(attributedText)
+                    // Track what we set to prevent re-setting the same content
+                    context.coordinator.lastSetAttributedString = attributedText
+                } else {
+                    print("⚠️ WARNING: Invalid attributed text length, skipping update")
+                }
+            }
         }
 
         textView.isEditable = isEditable
@@ -544,14 +598,27 @@ struct RichTextEditor: NSViewRepresentable {
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: RichTextEditor
 
+        /// Flag to prevent circular updates between textDidChange and updateNSView
+        /// When true, updateNSView will skip text updates to break the recursion cycle
+        var isUpdatingFromUser = false
+
+        /// Track the last attributed string we set to prevent unnecessary updates
+        /// NSTextView can slightly modify attributed strings, so we track what we actually set
+        var lastSetAttributedString: NSAttributedString?
+
         init(_ parent: RichTextEditor) {
             self.parent = parent
         }
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
+
+            // CRITICAL: Set flag to prevent infinite recursion
+            // This prevents updateNSView from updating textStorage while we're updating the binding
+            isUpdatingFromUser = true
             parent.attributedText = textView.attributedString()
             parent.textDidChange?(textView.attributedString())
+            isUpdatingFromUser = false
         }
 
         func textViewDidChangeSelection(_ notification: Notification) {

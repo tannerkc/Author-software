@@ -488,7 +488,7 @@ private struct BookOutlineSectionView: View {
         BookOutlineSection(
             book: book,
             selectedChapter: selectedChapter,
-            viewModel: $viewModel,
+            viewModel: viewModel,
             onChapterSelect: onChapterSelect
         )
     }
@@ -500,7 +500,7 @@ private struct ResearchItemsSectionView: View {
     @Bindable var viewModel: InspectorViewModel
 
     var body: some View {
-        ResearchItemsSection(book: book, viewModel: $viewModel)
+        ResearchItemsSection(book: book, viewModel: viewModel)
     }
 }
 
@@ -510,7 +510,7 @@ private struct CharactersAndScenesSectionView: View {
     @Bindable var viewModel: InspectorViewModel
 
     var body: some View {
-        CharactersAndScenesSection(book: book, viewModel: $viewModel)
+        CharactersAndScenesSection(book: book, viewModel: viewModel)
     }
 }
 
@@ -520,7 +520,7 @@ private struct ChapterMetadataSectionView: View {
     @Bindable var viewModel: InspectorViewModel
 
     var body: some View {
-        ChapterMetadataSection(chapter: chapter, viewModel: $viewModel)
+        ChapterMetadataSection(chapter: chapter, viewModel: viewModel)
     }
 }
 

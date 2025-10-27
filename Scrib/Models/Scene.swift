@@ -19,17 +19,6 @@ fileprivate typealias PlatformFont = NSFont
 fileprivate typealias PlatformColor = NSColor
 #endif
 
-// MARK: - Cross-Platform Color Extensions
-extension PlatformColor {
-    fileprivate static var labelColor: PlatformColor {
-        #if canImport(UIKit)
-        return UIColor.label
-        #elseif canImport(AppKit)
-        return NSColor.labelColor
-        #endif
-    }
-}
-
 /// Represents a scene within a book
 ///
 /// Scenes are smaller writing units than chapters, often representing a single
@@ -188,6 +177,7 @@ extension Scene {
     }
 
     /// Get the attributed content from stored RTF data
+    @MainActor
     func getAttributedContent() -> NSAttributedString {
         if let rtfData = formattedContent {
             do {

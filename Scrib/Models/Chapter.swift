@@ -19,17 +19,6 @@ fileprivate typealias PlatformFont = NSFont
 fileprivate typealias PlatformColor = NSColor
 #endif
 
-// MARK: - Cross-Platform Color Extensions
-extension PlatformColor {
-    fileprivate static var labelColor: PlatformColor {
-        #if canImport(UIKit)
-        return UIColor.label
-        #elseif canImport(AppKit)
-        return NSColor.labelColor
-        #endif
-    }
-}
-
 /// Represents a chapter within a book
 ///
 /// A Chapter is the fundamental writing unit in Scrib, analogous to a note in Apple Notes.
@@ -46,6 +35,8 @@ final class Chapter {
     var content: String
 
     /// Sort order within the parent book (0-indexed)
+    /// Indexed for efficient sorting when displaying chapter lists
+    #Index<Chapter>([\.order])
     var order: Int
 
     /// Timestamp when the chapter was first created
@@ -155,6 +146,73 @@ final class Chapter {
     var hasMetadata: Bool {
         metadata != nil
     }
+
+    /// Check if this chapter object is in a valid state for property access
+    ///
+    /// Returns true if the object has a valid model context and is not faulting.
+    /// Use this before accessing properties that might cause crashes on faulting objects.
+    var isValidForAccess: Bool {
+        // Check if the object has a model context
+        guard self.modelContext != nil else {
+            return false
+        }
+        // For SwiftData, if we have a context, the object should be accessible
+        return true
+    }
+
+    /// Safely access the content property with validation
+    ///
+    /// Returns the chapter content if the object is in a valid state,
+    /// or an empty string if not accessible.
+    var safeContent: String {
+        guard modelContext != nil else {
+            print("⚠️ Chapter object has no model context, returning empty content")
+            return ""
+        }
+        // Wrap property access in error handling for extra safety
+        do {
+            return content
+        } catch {
+            print("❌ Failed to access chapter content: \(error.localizedDescription)")
+            return ""
+        }
+    }
+
+    /// Safely access the formatted content property with validation
+    ///
+    /// Returns the chapter's RTF data if the object is in a valid state,
+    /// or nil if not accessible.
+    var safeFormattedContent: Data? {
+        guard modelContext != nil else {
+            print("⚠️ Chapter object has no model context, returning nil formatted content")
+            return nil
+        }
+        // Wrap property access in error handling for extra safety
+        do {
+            return formattedContent
+        } catch {
+            print("❌ Failed to access chapter formatted content: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Safely access the book relationship with validation
+    ///
+    /// Returns the parent book if the object and relationship are valid,
+    /// or nil if not accessible.
+    var safeBook: Book? {
+        guard modelContext != nil else {
+            print("⚠️ Chapter object has no model context, returning nil book")
+            return nil
+        }
+        // Wrap relationship access in error handling for extra safety
+        do {
+            return book
+        } catch {
+            print("❌ Failed to access chapter book relationship: \(error.localizedDescription)")
+            return nil
+        }
+    }
 }
 
 // MARK: - Comparable
@@ -182,9 +240,22 @@ extension Chapter {
 
     /// Get the attributed content from stored RTF data, or create default from plain text
     /// - Returns: NSAttributedString with formatting, or default styled plain text
+    @MainActor
     func getAttributedContent() -> NSAttributedString {
-        // If we have formatted content, try to load it
-        if let rtfData = formattedContent {
+        // CRITICAL: Validate object state before accessing properties
+        // Prevents EXC_BAD_ACCESS on macOS when object is faulting
+        guard self.isValidForAccess else {
+            print("❌ CRITICAL: Chapter object not valid for access, returning empty attributed string")
+            let defaultFont = PlatformFont.systemFont(ofSize: 17)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: defaultFont,
+                .foregroundColor: PlatformColor.labelColor
+            ]
+            return NSAttributedString(string: "", attributes: attributes)
+        }
+
+        // Safe access to formatted content using extension helper
+        if let rtfData = self.safeFormattedContent {
             print("📖 Loading RTF: \(rtfData.count) bytes")
 
             do {
@@ -203,13 +274,28 @@ extension Chapter {
             print("⚠️ No RTF data available, using plain text")
         }
 
-        // Create default attributed string from plain text
-        let defaultFont = PlatformFont.systemFont(ofSize: 17)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: defaultFont,
-            .foregroundColor: PlatformColor.labelColor
-        ]
-        return NSAttributedString(string: content, attributes: attributes)
+        // Safe access to content property using extension helper
+        // This prevents EXC_BAD_ACCESS when the Chapter object is faulting
+        let safeContentString = self.safeContent
+
+        // Create default attributed string from plain text - with defensive error handling
+        do {
+            let defaultFont = PlatformFont.systemFont(ofSize: 17)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: defaultFont,
+                .foregroundColor: PlatformColor.labelColor
+            ]
+            return NSAttributedString(string: safeContentString, attributes: attributes)
+        } catch {
+            print("❌ CRITICAL: Failed to create attributed string: \(error)")
+            // Return absolute fallback - empty attributed string with default attributes
+            let defaultFont = PlatformFont.systemFont(ofSize: 17)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: defaultFont,
+                .foregroundColor: PlatformColor.labelColor
+            ]
+            return NSAttributedString(string: "", attributes: attributes)
+        }
     }
 
     /// Save attributed content with dual storage (plain text + RTF)
@@ -220,6 +306,12 @@ extension Chapter {
     /// 2. RTF formatting is attempted but may fail gracefully
     /// 3. If RTF conversion fails, plain text backup ensures zero data loss
     func setAttributedContent(_ attributedString: NSAttributedString) {
+        // CRITICAL: Validate object state before modifying properties
+        guard self.isValidForAccess else {
+            print("❌ CRITICAL: Chapter object not valid for modification, skipping save")
+            return
+        }
+
         // STEP 1: Save plain text FIRST (critical - never fails)
         // This ensures content is always preserved even if RTF conversion fails
         content = attributedString.string

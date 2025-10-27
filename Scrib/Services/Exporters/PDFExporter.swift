@@ -20,37 +20,6 @@ fileprivate typealias PlatformFont = NSFont
 fileprivate typealias PlatformColor = NSColor
 #endif
 
-// MARK: - Cross-Platform Color Extensions
-// Provide consistent color naming across iOS (UIColor) and macOS (NSColor)
-extension PlatformColor {
-    /// Cross-platform label color (adapts to light/dark mode)
-    fileprivate static var labelColor: PlatformColor {
-        #if canImport(UIKit)
-        return UIColor.label
-        #elseif canImport(AppKit)
-        return NSColor.labelColor
-        #endif
-    }
-
-    /// Cross-platform secondary label color
-    fileprivate static var secondaryLabelColor: PlatformColor {
-        #if canImport(UIKit)
-        return UIColor.secondaryLabel
-        #elseif canImport(AppKit)
-        return NSColor.secondaryLabelColor
-        #endif
-    }
-
-    /// Cross-platform tertiary label color
-    fileprivate static var tertiaryLabelColor: PlatformColor {
-        #if canImport(UIKit)
-        return UIColor.tertiaryLabel
-        #elseif canImport(AppKit)
-        return NSColor.tertiaryLabelColor
-        #endif
-    }
-}
-
 /// PDF export implementation using UIGraphicsPDFRenderer
 /// - Swift 6.2 compliant with @MainActor isolation
 @MainActor

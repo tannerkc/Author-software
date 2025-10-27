@@ -34,6 +34,7 @@ extension NSColor {
 ///
 /// This view uses modern SwiftData patterns with @Bindable
 /// for automatic change tracking and persistence.
+@MainActor
 struct ChapterEditorView: View {
     /// SwiftData model context
     @Environment(\.modelContext) private var modelContext
@@ -42,7 +43,11 @@ struct ChapterEditorView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     /// The chapter being edited (passed directly to avoid @Query rebuild triggers)
-    @Bindable var chapter: Chapter
+    /// Made optional to safely handle SwiftData loading issues
+    var chapter: Chapter?
+
+    /// Callback to handle chapter selection from inspector (macOS only)
+    var onChapterSelect: ((Chapter) -> Void)?
 
     /// View model for chapter operations (initialized on appear)
     @State private var viewModel: ChapterViewModel?
@@ -85,30 +90,51 @@ struct ChapterEditorView: View {
 
     /// Inspector presentation state
     @State private var isInspectorPresented: Bool = false
+
+    /// Search text for macOS toolbar
+    @State private var searchText = ""
     #endif
 
     var body: some View {
-        VStack(spacing: 0) {
-            // MARK: - Rich Text Editor (Apple Notes style)
-            // Supports text styling (Title, Heading, Body) and character formatting
-            RichTextEditor(
-                attributedText: $attributedText,
-                selectedRange: $textSelection,
-                isFocused: $isEditorFocused,
-                isEditable: true, // Always editable - cursor and selection work at all times
-                shouldHideKeyboard: showingFormatMenu, // Hide keyboard with custom inputView (Apple Notes behavior)
-                onAttributesChanged: { formats in
-                    // Update active formats for format menu button states
-                    activeFormats = formats
+        Group {
+            if let chapter = chapter {
+                editorContent(for: chapter)
+            } else {
+                VStack {
+                    Text("Chapter not available")
+                        .foregroundStyle(.secondary)
+                        .font(.headline)
+                    Text("Please try selecting the chapter again")
+                        .foregroundStyle(.tertiary)
+                        .font(.subheadline)
                 }
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .id(chapter.id) // CRITICAL: Stable identity prevents view recreation
-            .onChange(of: attributedText) { _, newValue in
-                // Trigger debounced save when text changes
-                // This uses .onChange instead of a closure parameter to maintain stable view identity
-                debouncedSave(newValue, chapter: chapter)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func editorContent(for chapter: Chapter) -> some View {
+        VStack(spacing: 0) {
+                // MARK: - Rich Text Editor (Apple Notes style)
+                // Supports text styling (Title, Heading, Body) and character formatting
+                RichTextEditor(
+                    attributedText: $attributedText,
+                    selectedRange: $textSelection,
+                    isFocused: $isEditorFocused,
+                    isEditable: true, // Always editable - cursor and selection work at all times
+                    shouldHideKeyboard: showingFormatMenu, // Hide keyboard with custom inputView (Apple Notes behavior)
+                    onAttributesChanged: { formats in
+                        // Update active formats for format menu button states
+                        activeFormats = formats
+                    }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .id(chapter.id) // CRITICAL: Stable identity prevents view recreation
+                .onChange(of: attributedText) { _, newValue in
+                    // Trigger debounced save when text changes
+                    // This uses .onChange instead of a closure parameter to maintain stable view identity
+                    debouncedSave(newValue, chapter: chapter)
+                }
 
             // MARK: - Adaptive Keyboard Toolbar
             #if os(iOS)
@@ -122,18 +148,32 @@ struct ChapterEditorView: View {
         }
         .navigationTitle("")  // No navigation title - content speaks for itself
         .adaptiveNavigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            // Initialize view model on first appear
+        .task {
+            // CRITICAL: Load content in async task with delay
+            // Direct property access in onAppear triggers SwiftData faults → model context changes → view rebuild → INFINITE RECURSION
+            // Task with delay breaks the synchronous cycle
+
+            // Initialize view model
             if viewModel == nil {
                 viewModel = ChapterViewModel(modelContext: modelContext)
             }
-
-            loadChapterContent(chapter)
 
             #if os(macOS)
             // Sync AppStorage to State for inspector visibility
             isInspectorPresented = isInspectorVisibleStorage
             #endif
+
+            // Delay content loading to ensure we're out of the current render cycle
+            try? await Task.sleep(for: .milliseconds(100))
+
+            guard !Task.isCancelled else { return }
+
+            // CRITICAL: Explicitly run on MainActor
+            // AppKit classes (NSColor, NSAttributedString) MUST be accessed from main thread
+            // .task can run on background threads, causing EXC_BAD_ACCESS
+            await MainActor.run {
+                loadChapterContent(chapter)
+            }
         }
         .onDisappear {
             // CRITICAL: Force save when navigating away to ensure no data loss
@@ -186,7 +226,8 @@ struct ChapterEditorView: View {
         }
         .sheet(isPresented: $showingExportSheet) {
             // Get the parent book for export
-            if let book = chapter.book {
+            // CRITICAL: Use safe relationship access to prevent EXC_BAD_ACCESS
+            if let book = chapter.safeBook {
                 ExportView(book: book, chapter: chapter)
             }
         }
@@ -251,17 +292,108 @@ struct ChapterEditorView: View {
                 }
             }
             #else
-            // macOS toolbar
+            // macOS toolbar - comprehensive format tools + search + export + inspector
             ToolbarItemGroup(placement: .primaryAction) {
+                // Format menu (Aa button)
                 Button {
-                    forceSave(chapter)
+                    handleFormatAction(.showFormatMenu)
                 } label: {
-                    Label("Save", systemImage: "square.and.arrow.down")
+                    Label("Format", systemImage: "textformat")
                 }
-                .keyboardShortcut("s", modifiers: .command)
+                .help("Text formatting")
+
+                // Core content tools
+                Button {
+                    handleFormatAction(.quote)
+                } label: {
+                    Label("Quote", systemImage: "text.quote")
+                }
+                .help("Insert quote")
+
+                Button {
+                    handleFormatAction(.link)
+                } label: {
+                    Label("Link", systemImage: "link")
+                }
+                .help("Insert link")
+
+                Button {
+                    handleFormatAction(.image)
+                } label: {
+                    Label("Image", systemImage: "photo")
+                }
+                .help("Insert image")
+
+                Button {
+                    handleFormatAction(.table)
+                } label: {
+                    Label("Table", systemImage: "tablecells")
+                }
+                .help("Insert table")
+
+                Divider()
+
+                // Scrib-specific authoring tools
+                Button {
+                    handleFormatAction(.markCharacter)
+                } label: {
+                    Label("Mark Character", systemImage: "person.fill.badge.plus")
+                }
+                .help("Mark character")
+
+                Button {
+                    handleFormatAction(.addNote)
+                } label: {
+                    Label("Add Note", systemImage: "note.text.badge.plus")
+                }
+                .help("Add note")
+
+                Button {
+                    handleFormatAction(.markScene)
+                } label: {
+                    Label("Mark Scene", systemImage: "mappin.circle")
+                }
+                .help("Mark scene location")
+
+                Button {
+                    handleFormatAction(.markPOV)
+                } label: {
+                    Label("Mark POV", systemImage: "eye.fill")
+                }
+                .help("Mark point of view")
+
+                Button {
+                    handleFormatAction(.setMetadata)
+                } label: {
+                    Label("Metadata", systemImage: "tag.fill")
+                }
+                .help("Set chapter metadata")
+
+                Spacer()
+
+                // Word count display
+                HStack(spacing: 4) {
+                    Text("\(chapter.wordCount)")
+                        .font(.caption.monospacedDigit())
+                        .fontWeight(.medium)
+                    Text("words")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8)
             }
 
-            ToolbarItem(placement: .secondaryAction) {
+            // Right side: Export and Inspector
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showingExportSheet = true
+                } label: {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+                .help("Export chapter")
+            }
+
+            ToolbarItem(placement: .automatic) {
                 Button {
                     isInspectorPresented.toggle()
                 } label: {
@@ -273,15 +405,19 @@ struct ChapterEditorView: View {
             #endif
         }
         #if os(macOS)
+        .searchable(text: $searchText, placement: .toolbar, prompt: "Search in chapter")
         .inspector(isPresented: $isInspectorPresented) {
-            if let book = chapter.book {
+            // CRITICAL: Use safe relationship access to prevent EXC_BAD_ACCESS
+            // chapter.book might be faulting on macOS when chapter is first selected
+            if let book = chapter.safeBook {
                 InspectorView(
                     book: book,
                     chapter: chapter,
                     onChapterSelect: { selectedChapter in
                         // Handle chapter selection from outline
-                        // This would navigate to the selected chapter in the main view
+                        // This navigates to the selected chapter in the main view
                         print("Selected chapter from inspector: \(selectedChapter.extractedTitle)")
+                        onChapterSelect?(selectedChapter)
                     }
                 )
             }
@@ -329,7 +465,7 @@ struct ChapterEditorView: View {
             showingMetadata = true
         case .markScene:
             // Quick-set scene location
-            if let metadata = chapter.metadata {
+            if let chapter = chapter, let metadata = chapter.metadata {
                 metadata.sceneLocation = "Scene"
             }
             showingMetadata = true
@@ -507,8 +643,28 @@ struct ChapterEditorView: View {
 
     /// Load chapter content when view appears
     /// - Parameter chapter: The chapter to load
+    @MainActor
     private func loadChapterContent(_ chapter: Chapter) {
+        // CRITICAL: Validate chapter object before accessing properties
+        // Prevents EXC_BAD_ACCESS on macOS when object is faulting
+        guard chapter.isValidForAccess else {
+            print("❌ CRITICAL: Chapter object not valid for content loading")
+            // Set empty attributed text with default formatting
+            let defaultFont = PlatformFont.systemFont(ofSize: 17)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: defaultFont,
+                .foregroundColor: PlatformColor.labelColor
+            ]
+            attributedText = NSAttributedString(string: "", attributes: attributes)
+            return
+        }
+
+        // REMOVED: modelContext.processPendingChanges()
+        // This was causing infinite recursion by triggering view rebuilds during selection
+        // SwiftData will handle pending changes automatically
+
         // Load formatted content (RTF) or create default from plain text
+        // getAttributedContent() now has its own validation
         attributedText = chapter.getAttributedContent()
 
         // Auto-focus for immediate typing
@@ -584,8 +740,8 @@ struct ChapterEditorView: View {
         chapter.setAttributedContent(text)
 
         // Update parent book's lastModified timestamp
-        // Safe access through relationship - verify it's still valid
-        if let parentBook = chapter.book {
+        // CRITICAL: Use safe relationship access to prevent EXC_BAD_ACCESS
+        if let parentBook = chapter.safeBook {
             parentBook.lastModified = Date()
         } else {
             print("⚠️ WARNING: Chapter has no parent book relationship during save")

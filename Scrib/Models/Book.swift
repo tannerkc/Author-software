@@ -28,6 +28,8 @@ final class Book {
     var dateCreated: Date
 
     /// Timestamp of the most recent modification to the book or any of its chapters
+    /// Indexed for efficient sorting in queries
+    #Index<Book>([\.lastModified], [\.title])
     var lastModified: Date
 
     /// Collection of chapters belonging to this book

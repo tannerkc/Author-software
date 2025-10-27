@@ -19,17 +19,6 @@ fileprivate typealias PlatformFont = NSFont
 fileprivate typealias PlatformColor = NSColor
 #endif
 
-// MARK: - Cross-Platform Color Extensions
-extension PlatformColor {
-    fileprivate static var labelColor: PlatformColor {
-        #if canImport(UIKit)
-        return UIColor.label
-        #elseif canImport(AppKit)
-        return NSColor.labelColor
-        #endif
-    }
-}
-
 /// Represents a writer's note or idea
 ///
 /// Notes are for brainstorming, ideas, character development, and general
@@ -183,6 +172,7 @@ extension Note {
     }
 
     /// Get the attributed content from stored RTF data
+    @MainActor
     func getAttributedContent() -> NSAttributedString {
         if let rtfData = formattedContent {
             do {
