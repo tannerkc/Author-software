@@ -39,6 +39,9 @@ struct ContentView: View {
     /// CRITICAL: Store filtered chapters to avoid repeated filtering of allChapters
     @State private var chaptersToShow: [Chapter] = []
 
+    /// Search text for filtering chapters (controlled by editor toolbar search)
+    @State private var chapterSearchText = ""
+
     /// Look up the currently selected book from its ID
     private var selectedBook: Book? {
         guard let id = selectedBookId else { return nil }
@@ -50,6 +53,19 @@ struct ContentView: View {
     private var selectedChapter: Chapter? {
         guard let id = selectedChapterId else { return nil }
         return chaptersToShow.first(where: { $0.id == id })
+    }
+
+    /// Filtered chapters based on search text
+    /// Searches both chapter titles and content (case-insensitive)
+    private var filteredChapters: [Chapter] {
+        if chapterSearchText.isEmpty {
+            return chaptersToShow
+        } else {
+            return chaptersToShow.filter { chapter in
+                chapter.title.localizedCaseInsensitiveContains(chapterSearchText) ||
+                chapter.content.localizedCaseInsensitiveContains(chapterSearchText)
+            }
+        }
     }
 
     /// Handle chapter selection from inspector or other sources
@@ -112,7 +128,7 @@ struct ContentView: View {
             if selectedBook != nil {
                 // Use proper List selection binding for consistency with sidebar
                 // This follows 2025 NavigationSplitView best practices
-                List(chaptersToShow, selection: $selectedChapterId) { chapter in
+                List(filteredChapters, selection: $selectedChapterId) { chapter in
                     VStack(alignment: .leading, spacing: 4) {
                         Text(chapter.title.isEmpty ? "Untitled" : chapter.title)
                             .font(.headline)
@@ -148,6 +164,7 @@ struct ContentView: View {
             if let chapter = selectedChapter {
                 ChapterEditorView(
                     chapter: chapter,
+                    searchText: $chapterSearchText,
                     onChapterSelect: handleChapterSelection
                 )
                 .id(chapter.id)

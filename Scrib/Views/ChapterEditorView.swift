@@ -46,6 +46,10 @@ struct ChapterEditorView: View {
     /// Made optional to safely handle SwiftData loading issues
     var chapter: Chapter?
 
+    /// Search text binding for filtering chapter list (macOS only)
+    /// Controlled by the toolbar search bar but filters the chapter list in ContentView
+    @Binding var searchText: String
+
     /// Callback to handle chapter selection from inspector (macOS only)
     var onChapterSelect: ((Chapter) -> Void)?
 
@@ -90,9 +94,6 @@ struct ChapterEditorView: View {
 
     /// Inspector presentation state
     @State private var isInspectorPresented: Bool = false
-
-    /// Search text for macOS toolbar
-    @State private var searchText = ""
     #endif
 
     var body: some View {
@@ -763,7 +764,7 @@ struct ChapterEditorView: View {
 
     if let book = try? store.fetchBooks().first,
        let chapter = book.chapters.first {
-        ChapterEditorView(chapter: chapter)
+        ChapterEditorView(chapter: chapter, searchText: .constant(""))
             .modelContainer(store.modelContainer)
     }
 }
@@ -773,6 +774,6 @@ struct ChapterEditorView: View {
     let chapter = Chapter(title: "Untitled Chapter", content: "")
     store.modelContainer.mainContext.insert(chapter)
 
-    return ChapterEditorView(chapter: chapter)
+    return ChapterEditorView(chapter: chapter, searchText: .constant(""))
         .modelContainer(store.modelContainer)
 }

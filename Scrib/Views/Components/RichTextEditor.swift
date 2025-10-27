@@ -519,6 +519,9 @@ struct RichTextEditor: NSViewRepresentable {
         textView.isEditable = isEditable
         textView.isRichText = true
 
+        // Set text container inset for padding (matches iOS version)
+        textView.textContainerInset = NSSize(width: 20, height: 12)
+
         // CRITICAL: Safe attributed text setting with validation
         // Prevents crashes when attributedText is invalid or empty
         if let textStorage = textView.textStorage {
