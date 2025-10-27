@@ -137,6 +137,52 @@ final class Chapter {
         return String(preview)
     }
 
+    /// Returns a contextual preview showing where search text appears in the content
+    /// - Parameter searchText: The text to search for
+    /// - Returns: A string containing context around the first match, or regular contentPreview if no match
+    func contextualPreview(for searchText: String) -> String {
+        guard !searchText.isEmpty else {
+            return contentPreview
+        }
+
+        let searchContent = content.lowercased()
+        let searchQuery = searchText.lowercased()
+
+        // Find first occurrence of search text
+        guard let range = searchContent.range(of: searchQuery) else {
+            return contentPreview
+        }
+
+        // Convert String.Index to Int for easier calculation
+        let matchStartIndex = searchContent.distance(from: searchContent.startIndex, to: range.lowerBound)
+
+        // Define context window: 50 chars before and after match
+        let contextBefore = 50
+        let contextAfter = 50
+
+        let startIndex = max(0, matchStartIndex - contextBefore)
+        let endIndex = min(content.count, matchStartIndex + searchText.count + contextAfter)
+
+        // Extract the contextual substring
+        let startStringIndex = content.index(content.startIndex, offsetBy: startIndex)
+        let endStringIndex = content.index(content.startIndex, offsetBy: endIndex)
+
+        var preview = String(content[startStringIndex..<endStringIndex])
+
+        // Add ellipsis if we're not at the start/end of content
+        if startIndex > 0 {
+            preview = "..." + preview
+        }
+        if endIndex < content.count {
+            preview = preview + "..."
+        }
+
+        // Clean up newlines for single-line display
+        preview = preview.replacingOccurrences(of: "\n", with: " ")
+
+        return preview.trimmingCharacters(in: .whitespaces)
+    }
+
     /// Returns true if the chapter has no content
     var isEmpty: Bool {
         content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

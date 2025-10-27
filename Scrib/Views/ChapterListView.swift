@@ -461,7 +461,7 @@ struct ChapterListView: View {
     private func chapterListRow(for chapter: Chapter) -> some View {
         // macOS NavigationSplitView uses plain rows with .tag(), NOT NavigationLink
         // NavigationLink is for iOS navigation stacks
-        ChapterRowView(chapter: chapter)
+        ChapterRowView(chapter: chapter, searchText: searchText.isEmpty ? nil : searchText)
             .tag(chapter.id)  // Selection binding pattern for macOS
             .id(chapter.id)
             .transition(.opacity.combined(with: .scale(scale: 0.95)))
@@ -503,6 +503,45 @@ struct ChapterListView: View {
 /// Individual row view for a chapter in the list
 struct ChapterRowView: View {
     let chapter: Chapter
+    var searchText: String? = nil
+
+    /// Get the appropriate preview text based on whether search is active
+    private var previewText: String {
+        if let search = searchText, !search.isEmpty {
+            return chapter.contextualPreview(for: search)
+        } else {
+            return chapter.contentPreview
+        }
+    }
+
+    /// Create highlighted attributed string for preview text
+    private func highlightedPreview() -> AttributedString {
+        let preview = previewText
+        var attributedString = AttributedString(preview)
+
+        // Only highlight if we have search text
+        guard let search = searchText, !search.isEmpty else {
+            return attributedString
+        }
+
+        // Find and highlight all occurrences of search text (case-insensitive)
+        let lowercasedPreview = preview.lowercased()
+        let lowercasedSearch = search.lowercased()
+
+        var searchStartIndex = lowercasedPreview.startIndex
+        while let range = lowercasedPreview.range(of: lowercasedSearch, range: searchStartIndex..<lowercasedPreview.endIndex) {
+            // Convert String range to AttributedString range
+            if let attributedRange = Range<AttributedString.Index>(range, in: attributedString) {
+                attributedString[attributedRange].foregroundColor = .primary
+                attributedString[attributedRange].font = .caption.bold()
+            }
+
+            // Move to next potential match
+            searchStartIndex = range.upperBound
+        }
+
+        return attributedString
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -517,8 +556,8 @@ struct ChapterRowView: View {
                         .fontWeight(.medium)
                         .lineLimit(1)
 
-                    if !chapter.contentPreview.isEmpty {
-                        Text(chapter.contentPreview.trimmingCharacters(in: .whitespacesAndNewlines))
+                    if !previewText.isEmpty {
+                        Text(highlightedPreview())
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)

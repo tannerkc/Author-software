@@ -35,6 +35,9 @@ struct ContentView: View {
     /// Column visibility state
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
+    /// Zen mode state for distraction-free writing
+    @State private var isZenModeEnabled = false
+
     /// Cached filtered chapters for display
     /// CRITICAL: Store filtered chapters to avoid repeated filtering of allChapters
     @State private var chaptersToShow: [Chapter] = []
@@ -87,96 +90,123 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            // SIDEBAR: Books - Ultra-simple inline implementation
-            List(books, selection: $selectedBookId) { book in
-                HStack {
-                    Image(systemName: "book.fill")
-                        .foregroundStyle(.blue)
-                        .font(.title3)
+        Group {
+            if isZenModeEnabled {
+                // ZEN MODE: Fullscreen editor only (distraction-free writing)
+                if let chapter = selectedChapter {
+                    ChapterEditorView(
+                        chapter: chapter,
+                        searchText: $chapterSearchText,
+                        isZenModeEnabled: $isZenModeEnabled,
+                        onChapterSelect: handleChapterSelection
+                    )
+                    .id(chapter.id)
+                } else {
+                    // Fallback if no chapter selected in zen mode
+                    VStack {
+                        Text("No chapter selected")
+                            .foregroundStyle(.secondary)
+                        Button("Exit Zen Mode") {
+                            isZenModeEnabled = false
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            } else {
+                // NORMAL MODE: Three-column layout
+                NavigationSplitView(columnVisibility: $columnVisibility) {
+                    // SIDEBAR: Books - Ultra-simple inline implementation
+                    List(books, selection: $selectedBookId) { book in
+                        HStack {
+                            Image(systemName: "book.fill")
+                                .foregroundStyle(.blue)
+                                .font(.title3)
 
-                    #if os(macOS)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(book.title)
-                            .font(.body)
-                        Text("\(book.chapterCount) chapters")
-                            .font(.caption)
+                            #if os(macOS)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(book.title)
+                                    .font(.body)
+                                Text("\(book.chapterCount) chapters")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            #else
+                            Text(book.title)
+                                .font(.body)
+                            #endif
+                        }
+                        .tag(book.id)
+                    }
+                    .navigationTitle("Books")
+                    .toolbar {
+                        #if os(macOS)
+                        Button {
+
+                        } label: {
+                            Label("New Book", systemImage: "book.badge.plus")
+                        }
+                        #else
+                        Button("New Book") { }
+                        #endif
+                    }
+
+                } content: {
+                    // CONTENT: Chapters - Standard List selection pattern (Apple HIG)
+                    if selectedBook != nil {
+                        // Use proper List selection binding for consistency with sidebar
+                        // This follows 2025 NavigationSplitView best practices
+                        List(filteredChapters, selection: $selectedChapterId) { chapter in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(chapter.title.isEmpty ? "Untitled" : chapter.title)
+                                    .font(.headline)
+                                if !chapter.content.isEmpty {
+                                    Text(chapter.content)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .tag(chapter.id)
+                        }
+                        .navigationTitle(selectedBook?.title ?? "Chapters")
+                        .toolbar {
+                            #if os(macOS)
+                            Button {
+
+                            } label: {
+                                Label("New Chapter", systemImage: "square.and.pencil")
+                            }
+                            #else
+                            Button("New Chapter") { }
+                            #endif
+                        }
+                    } else {
+                        Text("Select a book from the sidebar")
                             .foregroundStyle(.secondary)
                     }
-                    #else
-                    Text(book.title)
-                        .font(.body)
-                    #endif
-                }
-                .tag(book.id)
-            }
-            .navigationTitle("Books")
-            .toolbar {
-                #if os(macOS)
-                Button {
 
-                } label: {
-                    Label("New Book", systemImage: "book.badge.plus")
-                }
-                #else
-                Button("New Book") { }
-                #endif
-            }
-
-        } content: {
-            // CONTENT: Chapters - Standard List selection pattern (Apple HIG)
-            if selectedBook != nil {
-                // Use proper List selection binding for consistency with sidebar
-                // This follows 2025 NavigationSplitView best practices
-                List(filteredChapters, selection: $selectedChapterId) { chapter in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(chapter.title.isEmpty ? "Untitled" : chapter.title)
-                            .font(.headline)
-                        if !chapter.content.isEmpty {
-                            Text(chapter.content)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
+                } detail: {
+                    // DETAIL: Editor - Keep existing ChapterEditorView
+                    if let chapter = selectedChapter {
+                        ChapterEditorView(
+                            chapter: chapter,
+                            searchText: $chapterSearchText,
+                            isZenModeEnabled: $isZenModeEnabled,
+                            onChapterSelect: handleChapterSelection
+                        )
+                        .id(chapter.id)
+                        // .id() is REQUIRED to properly reset view state when switching chapters
+                        // Without it, onAppear doesn't fire and old content remains visible
+                        // The cached chapters approach prevents the infinite recursion that .id() previously caused
+                    } else {
+                        Text("Select a chapter to begin writing")
+                            .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .tag(chapter.id)
                 }
-                .navigationTitle(selectedBook?.title ?? "Chapters")
-                .toolbar {
-                    #if os(macOS)
-                    Button {
-
-                    } label: {
-                        Label("New Chapter", systemImage: "square.and.pencil")
-                    }
-                    #else
-                    Button("New Chapter") { }
-                    #endif
-                }
-            } else {
-                Text("Select a book from the sidebar")
-                    .foregroundStyle(.secondary)
-            }
-
-        } detail: {
-            // DETAIL: Editor - Keep existing ChapterEditorView
-            if let chapter = selectedChapter {
-                ChapterEditorView(
-                    chapter: chapter,
-                    searchText: $chapterSearchText,
-                    onChapterSelect: handleChapterSelection
-                )
-                .id(chapter.id)
-                // .id() is REQUIRED to properly reset view state when switching chapters
-                // Without it, onAppear doesn't fire and old content remains visible
-                // The cached chapters approach prevents the infinite recursion that .id() previously caused
-            } else {
-                Text("Select a chapter to begin writing")
-                    .foregroundStyle(.secondary)
+                .navigationSplitViewStyle(.balanced)
             }
         }
-        .navigationSplitViewStyle(.balanced)
         .onChange(of: selectedBookId) { oldValue, newValue in
             // CRITICAL: Only run if bookId ACTUALLY changed
             guard oldValue != newValue else {

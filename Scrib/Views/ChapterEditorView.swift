@@ -50,6 +50,10 @@ struct ChapterEditorView: View {
     /// Controlled by the toolbar search bar but filters the chapter list in ContentView
     @Binding var searchText: String
 
+    /// Zen mode binding for distraction-free writing (macOS only)
+    /// When enabled, hides sidebar and chapter list, showing only the editor
+    @Binding var isZenModeEnabled: Bool
+
     /// Callback to handle chapter selection from inspector (macOS only)
     var onChapterSelect: ((Chapter) -> Void)?
 
@@ -69,6 +73,8 @@ struct ChapterEditorView: View {
     @State private var showingCharacterMarker = false
     @State private var showingInlineNote = false
     @State private var showingMetadata = false
+    @State private var showingLinkInsertion = false
+    @State private var showingTableInsertion = false
 
     /// Format menu visibility
     @State private var showingFormatMenu = false
@@ -217,6 +223,16 @@ struct ChapterEditorView: View {
                 // TODO: Save inline note to chapter
             }
         }
+        .sheet(isPresented: $showingLinkInsertion) {
+            LinkInsertionSheet(selectedText: currentSelection) { url, displayText in
+                insertLink(url: url, displayText: displayText)
+            }
+        }
+        .sheet(isPresented: $showingTableInsertion) {
+            TableInsertionSheet { rows, columns in
+                insertTable(rows: rows, columns: columns)
+            }
+        }
         .sheet(isPresented: $showingMetadata) {
             if let viewModel = viewModel {
                 ChapterMetadataSheet(
@@ -295,13 +311,8 @@ struct ChapterEditorView: View {
             #else
             // macOS toolbar - comprehensive format tools + search + export + inspector
             ToolbarItemGroup(placement: .primaryAction) {
-                // Format menu (Aa button)
-                Button {
-                    handleFormatAction(.showFormatMenu)
-                } label: {
-                    Label("Format", systemImage: "textformat")
-                }
-                .help("Text formatting")
+                // Format menu (Aa button) - macOS dropdown menu
+                formatMenu()
 
                 // Core content tools
                 Button {
@@ -384,7 +395,7 @@ struct ChapterEditorView: View {
                 .padding(.horizontal, 8)
             }
 
-            // Right side: Export and Inspector
+            // Right side: Export, Zen Mode, and Inspector
             ToolbarItem(placement: .automatic) {
                 Button {
                     showingExportSheet = true
@@ -392,6 +403,16 @@ struct ChapterEditorView: View {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
                 .help("Export chapter")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    isZenModeEnabled.toggle()
+                } label: {
+                    Label("Zen Mode", systemImage: isZenModeEnabled ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
+                }
+                .keyboardShortcut("f", modifiers: [.command, .control])
+                .help("Toggle Zen Mode (^⌘F)")
             }
 
             ToolbarItem(placement: .automatic) {
@@ -426,6 +447,106 @@ struct ChapterEditorView: View {
         #endif
     }
 
+    // MARK: - Format Menu
+
+    /// Build the format menu for macOS toolbar
+    @ViewBuilder
+    private func formatMenu() -> some View {
+        Menu {
+            // Text Styles submenu
+            Menu("Text Style") {
+                ForEach(TextStyle.allCases) { style in
+                    Button {
+                        currentTextStyle = style
+                        handleTextFormat(.style(style))
+                    } label: {
+                        HStack {
+                            Text(style.displayName)
+                            if currentTextStyle == style {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Character Formatting
+            Button("Bold") {
+                handleTextFormat(.bold)
+            }
+            .keyboardShortcut("b", modifiers: .command)
+
+            Button("Italic") {
+                handleTextFormat(.italic)
+            }
+            .keyboardShortcut("i", modifiers: .command)
+
+            Button("Underline") {
+                handleTextFormat(.underline)
+            }
+            .keyboardShortcut("u", modifiers: .command)
+
+            Button("Strikethrough") {
+                handleTextFormat(.strikethrough)
+            }
+
+            Divider()
+
+            // Text Color submenu
+            Menu("Text Color") {
+                Button("Black") { handleTextFormat(.textColor(.black)) }
+                Button("Red") { handleTextFormat(.textColor(.red)) }
+                Button("Orange") { handleTextFormat(.textColor(.orange)) }
+                Button("Yellow") { handleTextFormat(.textColor(.yellow)) }
+                Button("Green") { handleTextFormat(.textColor(.green)) }
+                Button("Blue") { handleTextFormat(.textColor(.blue)) }
+                Button("Purple") { handleTextFormat(.textColor(.purple)) }
+            }
+
+            // Highlight submenu
+            Menu("Highlight") {
+                Button("Yellow") { handleTextFormat(.highlight(.yellow)) }
+                Button("Orange") { handleTextFormat(.highlight(.orange)) }
+                Button("Pink") { handleTextFormat(.highlight(.pink)) }
+                Button("Purple") { handleTextFormat(.highlight(.purple)) }
+                Button("Blue") { handleTextFormat(.highlight(.blue)) }
+                Button("Green") { handleTextFormat(.highlight(.green)) }
+                Divider()
+                Button("Remove Highlight") { handleTextFormat(.highlight(.clear)) }
+            }
+
+            Divider()
+
+            // Lists
+            Button("Bullet List") {
+                handleTextFormat(.bulletList)
+            }
+
+            Button("Numbered List") {
+                handleTextFormat(.numberedList)
+            }
+
+            Button("Checklist") {
+                handleTextFormat(.checklist)
+            }
+
+            Divider()
+
+            Button("Increase Indent") {
+                handleTextFormat(.indent)
+            }
+
+            Button("Decrease Indent") {
+                handleTextFormat(.outdent)
+            }
+        } label: {
+            Label("Format", systemImage: "textformat")
+        }
+        .help("Text formatting")
+    }
+
     // MARK: - Format Actions
 
     /// Handle formatting actions from the keyboard toolbar
@@ -451,11 +572,44 @@ struct ChapterEditorView: View {
         case .checklist:
             handleTextFormat(.checklist)
         case .quote:
-            // TODO: Implement quote formatting
-            print("Quote formatting not yet implemented")
+            // Implement quote block formatting with visual styling
+            let mutableText = NSMutableAttributedString(attributedString: attributedText)
+
+            // Determine range (selected text or current paragraph)
+            let targetRange: NSRange
+            if textSelection.length > 0 {
+                // Use selection, but expand to full paragraphs
+                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            } else {
+                // Use current paragraph
+                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            }
+
+            guard targetRange.location != NSNotFound && targetRange.length > 0 else { return }
+
+            // Check if already a quote block by looking for quote paragraph style
+            let existingAttributes = mutableText.attributes(at: targetRange.location, effectiveRange: nil)
+            let isAlreadyQuoted = existingAttributes[.paragraphStyle] != nil &&
+                                 (existingAttributes[.paragraphStyle] as? NSParagraphStyle)?.headIndent ?? 0 > 0
+
+            if isAlreadyQuoted {
+                // Remove quote block styling
+                removeQuoteBlockStyling(from: mutableText, range: targetRange)
+            } else {
+                // Apply quote block styling
+                applyQuoteBlockStyling(to: mutableText, range: targetRange)
+            }
+
+            attributedText = mutableText
         case .link:
-            // TODO: Implement link insertion
-            print("Link formatting not yet implemented")
+            // Show link insertion sheet
+            // Get selected text if any
+            if textSelection.length > 0 {
+                currentSelection = (attributedText.string as NSString).substring(with: textSelection)
+            } else {
+                currentSelection = ""
+            }
+            showingLinkInsertion = true
         case .markCharacter:
             currentSelection = "Selected text"  // Will be enhanced with actual selection
             showingCharacterMarker = true
@@ -473,6 +627,16 @@ struct ChapterEditorView: View {
         case .markPOV:
             // Quick-set POV
             showingMetadata = true
+        case .image:
+            // Show native file picker for image insertion (macOS only)
+            #if os(macOS)
+            showImagePicker()
+            #else
+            print("Image insertion not implemented on iOS")
+            #endif
+        case .table:
+            // Show table insertion sheet
+            showingTableInsertion = true
         default:
             print("Format action not yet implemented: \(action)")
         }
@@ -756,7 +920,348 @@ struct ChapterEditorView: View {
             print("❌ Auto-save failed: \(error.localizedDescription)")
         }
     }
+
+    // MARK: - Link Insertion
+
+    /// Insert a hyperlink at the current cursor position or replace selected text
+    /// - Parameters:
+    ///   - url: The URL to link to
+    ///   - displayText: The text to display for the link
+    private func insertLink(url: String, displayText: String) {
+        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+
+        // Create link attributes
+        #if canImport(UIKit)
+        let linkAttributes: [NSAttributedString.Key: Any] = [
+            .link: url,
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue,
+            .font: UIFont.systemFont(ofSize: 17)
+        ]
+        #else
+        let linkAttributes: [NSAttributedString.Key: Any] = [
+            .link: url,
+            .foregroundColor: NSColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue,
+            .font: NSFont.systemFont(ofSize: 17)
+        ]
+        #endif
+
+        let linkString = NSAttributedString(string: displayText, attributes: linkAttributes)
+
+        // Replace selected text or insert at cursor
+        if textSelection.length > 0 {
+            // Replace selected text with link
+            mutableText.replaceCharacters(in: textSelection, with: linkString)
+            // Update selection to end of inserted link
+            textSelection = NSRange(location: textSelection.location + displayText.count, length: 0)
+        } else {
+            // Insert at cursor position
+            mutableText.insert(linkString, at: textSelection.location)
+            // Update selection to end of inserted link
+            textSelection = NSRange(location: textSelection.location + displayText.count, length: 0)
+        }
+
+        // Update the attributed text
+        attributedText = mutableText
+    }
+
+    // MARK: - Image Insertion
+
+    #if os(macOS)
+    /// Show native macOS file picker for image selection
+    private func showImagePicker() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.png, .jpeg, .heic]
+        panel.message = "Select an image to insert"
+
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                Task { @MainActor in
+                    await self.insertImage(from: url)
+                }
+            }
+        }
+    }
+
+    /// Insert an image from a file URL into the text
+    /// - Parameter url: The file URL of the image
+    @MainActor
+    private func insertImage(from url: URL) async {
+        guard let image = NSImage(contentsOf: url) else {
+            print("❌ Failed to load image from: \(url)")
+            return
+        }
+
+        // Create text attachment
+        let attachment = NSTextAttachment()
+        attachment.image = image
+
+        // Scale image if too large (max width 600pt)
+        let maxWidth: CGFloat = 600
+        if image.size.width > maxWidth {
+            let scale = maxWidth / image.size.width
+            attachment.bounds = CGRect(
+                x: 0,
+                y: 0,
+                width: maxWidth,
+                height: image.size.height * scale
+            )
+        } else {
+            attachment.bounds = CGRect(origin: .zero, size: image.size)
+        }
+
+        // Create attributed string from attachment
+        let attachmentString = NSAttributedString(attachment: attachment)
+        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+
+        // Insert at cursor position
+        mutableText.insert(attachmentString, at: textSelection.location)
+
+        // Add newline after image for better formatting
+        let newline = NSAttributedString(
+            string: "\n",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 17),
+                .foregroundColor: NSColor.labelColor
+            ]
+        )
+        mutableText.insert(newline, at: textSelection.location + 1)
+
+        // Update the attributed text
+        attributedText = mutableText
+
+        // Move cursor after image and newline
+        textSelection = NSRange(location: textSelection.location + 2, length: 0)
+
+        print("✅ Image inserted successfully")
+    }
+    #endif
+
+    // MARK: - Table Insertion
+
+    /// Insert a formatted table at the current cursor position
+    /// - Parameters:
+    ///   - rows: Number of rows
+    ///   - columns: Number of columns
+    private func insertTable(rows: Int, columns: Int) {
+        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+
+        #if canImport(UIKit)
+        let font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
+        let textColor = UIColor.label
+        let separatorColor = UIColor.separator
+        #else
+        let font = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
+        let textColor = NSColor.labelColor
+        let separatorColor = NSColor.separatorColor
+        #endif
+
+        // Create table as formatted text
+        // Calculate column width (approximate - 15 characters per column)
+        let columnWidth = 15
+        let cellPlaceholder = String(repeating: " ", count: columnWidth - 2)
+
+        var tableText = "\n" // Start with newline
+
+        // Top border
+        tableText += "┌" + (0..<columns).map { _ in String(repeating: "─", count: columnWidth) }.joined(separator: "┬") + "┐\n"
+
+        // Header row (first row)
+        for row in 0..<rows {
+            tableText += "│"
+            for col in 0..<columns {
+                let cellContent = row == 0 ? "Header \(col + 1)" : "Cell"
+                let padding = String(repeating: " ", count: max(0, columnWidth - cellContent.count - 1))
+                tableText += " " + cellContent + padding + "│"
+            }
+            tableText += "\n"
+
+            // Separator after header or between rows
+            if row == 0 {
+                // Header separator (thicker)
+                tableText += "├" + (0..<columns).map { _ in String(repeating: "─", count: columnWidth) }.joined(separator: "┼") + "┤\n"
+            } else if row < rows - 1 {
+                // Regular separator
+                tableText += "├" + (0..<columns).map { _ in String(repeating: "─", count: columnWidth) }.joined(separator: "┼") + "┤\n"
+            }
+        }
+
+        // Bottom border
+        tableText += "└" + (0..<columns).map { _ in String(repeating: "─", count: columnWidth) }.joined(separator: "┴") + "┘\n"
+
+        // Create attributed string with monospaced font
+        let tableAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor
+        ]
+
+        let tableString = NSAttributedString(string: tableText, attributes: tableAttributes)
+
+        // Insert at cursor position
+        mutableText.insert(tableString, at: textSelection.location)
+
+        // Update the attributed text
+        attributedText = mutableText
+
+        // Move cursor after table
+        textSelection = NSRange(location: textSelection.location + tableText.count, length: 0)
+
+        print("✅ Table (\(rows)×\(columns)) inserted successfully")
+    }
+
+    // MARK: - Quote Block Styling
+
+    /// Apply quote block styling to the given text range
+    /// - Parameters:
+    ///   - text: The mutable attributed string to modify
+    ///   - range: The range to apply quote styling to
+    private func applyQuoteBlockStyling(to text: NSMutableAttributedString, range: NSRange) {
+        // Create paragraph style with indentation (simulates left border)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.headIndent = 20 // Left indentation
+        paragraphStyle.firstLineHeadIndent = 20
+        paragraphStyle.tailIndent = -10 // Right margin
+
+        #if canImport(UIKit)
+        // Apply quote block attributes
+        text.addAttributes([
+            .paragraphStyle: paragraphStyle,
+            .backgroundColor: UIColor.systemGray6, // Light background
+            .foregroundColor: UIColor.secondaryLabel, // Slightly muted text
+            .font: UIFont.systemFont(ofSize: 17, weight: .regular).with(traits: .traitItalic)
+        ], range: range)
+
+        // Add visual left border using a special marker at paragraph start
+        // Insert "┃ " at the beginning of each line in the range
+        let paragraphRanges = getParagraphRanges(in: text, for: range)
+        var offset = 0
+        for paragraphRange in paragraphRanges {
+            let adjustedLocation = paragraphRange.location + offset
+            let borderMarker = NSAttributedString(
+                string: "┃ ",
+                attributes: [
+                    .foregroundColor: UIColor.systemBlue,
+                    .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+                ]
+            )
+            text.insert(borderMarker, at: adjustedLocation)
+            offset += 2 // Account for inserted characters
+        }
+        #else
+        // macOS version
+        text.addAttributes([
+            .paragraphStyle: paragraphStyle,
+            .backgroundColor: NSColor.quaternaryLabelColor, // Light background
+            .foregroundColor: NSColor.secondaryLabelColor, // Slightly muted text
+            .font: NSFont.systemFont(ofSize: 17, weight: .regular).with(traits: .italic)
+        ], range: range)
+
+        // Add visual left border
+        let paragraphRanges = getParagraphRanges(in: text, for: range)
+        var offset = 0
+        for paragraphRange in paragraphRanges {
+            let adjustedLocation = paragraphRange.location + offset
+            let borderMarker = NSAttributedString(
+                string: "┃ ",
+                attributes: [
+                    .foregroundColor: NSColor.systemBlue,
+                    .font: NSFont.systemFont(ofSize: 17, weight: .semibold)
+                ]
+            )
+            text.insert(borderMarker, at: adjustedLocation)
+            offset += 2
+        }
+        #endif
+    }
+
+    /// Remove quote block styling from the given text range
+    /// - Parameters:
+    ///   - text: The mutable attributed string to modify
+    ///   - range: The range to remove quote styling from
+    private func removeQuoteBlockStyling(from text: NSMutableAttributedString, range: NSRange) {
+        // Remove border markers first
+        let paragraphRanges = getParagraphRanges(in: text, for: range)
+        var offset = 0
+
+        for paragraphRange in paragraphRanges.reversed() {
+            let adjustedRange = NSRange(
+                location: paragraphRange.location - offset,
+                length: paragraphRange.length
+            )
+
+            if adjustedRange.location < text.length {
+                let paragraphText = (text.string as NSString).substring(with: adjustedRange)
+                if paragraphText.hasPrefix("┃ ") {
+                    let markerRange = NSRange(location: adjustedRange.location, length: 2)
+                    text.deleteCharacters(in: markerRange)
+                    offset += 2
+                }
+            }
+        }
+
+        // Reset to default paragraph style and formatting
+        let defaultParagraphStyle = NSMutableParagraphStyle()
+        defaultParagraphStyle.headIndent = 0
+        defaultParagraphStyle.firstLineHeadIndent = 0
+        defaultParagraphStyle.tailIndent = 0
+
+        #if canImport(UIKit)
+        text.addAttributes([
+            .paragraphStyle: defaultParagraphStyle,
+            .backgroundColor: UIColor.clear,
+            .foregroundColor: UIColor.label,
+            .font: UIFont.systemFont(ofSize: 17, weight: .regular)
+        ], range: NSRange(location: range.location, length: text.length - range.location))
+        #else
+        text.addAttributes([
+            .paragraphStyle: defaultParagraphStyle,
+            .backgroundColor: NSColor.clear,
+            .foregroundColor: NSColor.labelColor,
+            .font: NSFont.systemFont(ofSize: 17, weight: .regular)
+        ], range: NSRange(location: range.location, length: min(range.length, text.length - range.location)))
+        #endif
+    }
+
+    /// Get individual paragraph ranges within a larger range
+    /// - Parameters:
+    ///   - text: The attributed string
+    ///   - range: The overall range to search within
+    /// - Returns: Array of paragraph ranges
+    private func getParagraphRanges(in text: NSAttributedString, for range: NSRange) -> [NSRange] {
+        var paragraphRanges: [NSRange] = []
+        let string = text.string as NSString
+
+        string.enumerateSubstrings(in: range, options: .byParagraphs) { _, paragraphRange, _, _ in
+            paragraphRanges.append(paragraphRange)
+        }
+
+        return paragraphRanges
+    }
 }
+
+// MARK: - Font Extensions
+
+#if canImport(UIKit)
+extension UIFont {
+    func with(traits: UIFontDescriptor.SymbolicTraits) -> UIFont {
+        guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else {
+            return self
+        }
+        return UIFont(descriptor: descriptor, size: pointSize)
+    }
+}
+#else
+extension NSFont {
+    func with(traits: NSFontDescriptor.SymbolicTraits) -> NSFont {
+        let descriptor = fontDescriptor.withSymbolicTraits(traits)
+        return NSFont(descriptor: descriptor, size: pointSize) ?? self
+    }
+}
+#endif
 
 // MARK: - Previews
 #Preview("With Content") {
@@ -764,7 +1269,7 @@ struct ChapterEditorView: View {
 
     if let book = try? store.fetchBooks().first,
        let chapter = book.chapters.first {
-        ChapterEditorView(chapter: chapter, searchText: .constant(""))
+        ChapterEditorView(chapter: chapter, searchText: .constant(""), isZenModeEnabled: .constant(false))
             .modelContainer(store.modelContainer)
     }
 }
@@ -774,6 +1279,6 @@ struct ChapterEditorView: View {
     let chapter = Chapter(title: "Untitled Chapter", content: "")
     store.modelContainer.mainContext.insert(chapter)
 
-    return ChapterEditorView(chapter: chapter, searchText: .constant(""))
+    return ChapterEditorView(chapter: chapter, searchText: .constant(""), isZenModeEnabled: .constant(false))
         .modelContainer(store.modelContainer)
 }
