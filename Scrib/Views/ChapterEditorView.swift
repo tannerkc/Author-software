@@ -63,6 +63,10 @@ struct ChapterEditorView: View {
     /// Local state for the rich text editor (bound to chapter content)
     @State private var attributedText: NSAttributedString = NSAttributedString()
 
+    /// CRITICAL: Closure to get current textStorage content (prevents race condition data loss)
+    /// This provides access to fresh textStorage data instead of stale binding
+    @State private var getCurrentTextStorageContent: (() -> NSAttributedString)?
+
     /// Focus state for the editor
     @FocusState private var isEditorFocused: Bool
 
@@ -138,7 +142,8 @@ struct ChapterEditorView: View {
                     onAttributesChanged: { formats in
                         // Update active formats for format menu button states
                         activeFormats = formats
-                    }
+                    },
+                    getCurrentContent: $getCurrentTextStorageContent // CRITICAL: Access to fresh textStorage
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .id(chapter.id) // CRITICAL: Stable identity prevents view recreation
@@ -161,7 +166,7 @@ struct ChapterEditorView: View {
         .navigationTitle("")  // No navigation title - content speaks for itself
         .adaptiveNavigationBarTitleDisplayMode(.inline)
         .task {
-            // CRITICAL: Load content in async task with delay
+            // CRITICAL: Load content in async task with INCREASED delay
             // Direct property access in onAppear triggers SwiftData faults → model context changes → view rebuild → INFINITE RECURSION
             // Task with delay breaks the synchronous cycle
 
@@ -175,8 +180,10 @@ struct ChapterEditorView: View {
             isInspectorPresented = isInspectorVisibleStorage
             #endif
 
-            // Delay content loading to ensure we're out of the current render cycle
-            try? await Task.sleep(for: .milliseconds(100))
+            // CRITICAL: Increased delay from 100ms to 200ms
+            // This ensures ALL view updates and SwiftData operations complete first
+            // Prevents blocking the UI thread during initial render
+            try? await Task.sleep(for: .milliseconds(200))
 
             guard !Task.isCancelled else { return }
 
@@ -189,6 +196,14 @@ struct ChapterEditorView: View {
         }
         .onDisappear {
             // CRITICAL: Force save when navigating away to ensure no data loss
+            // BUT: Skip save if getCurrentTextStorageContent is nil (view just created, not used yet)
+            // This prevents newly created views from overwriting with empty content during zen mode transitions
+            #if os(macOS)
+            guard getCurrentTextStorageContent != nil else {
+                print("⏭️ Skipping force save - view just created, closure not set yet")
+                return
+            }
+            #endif
             forceSave(chapter)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -426,7 +441,7 @@ struct ChapterEditorView: View {
                 Button {
                     isZenModeEnabled.toggle()
                 } label: {
-                    Label("Zen Mode", systemImage: isZenModeEnabled ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
+                    Label("Zen Mode", systemImage: isZenModeEnabled ? "arrow.down.right.and.arrow.up.left.rectangle" : "arrow.up.left.and.arrow.down.right.rectangle")
                 }
                 .keyboardShortcut("f", modifiers: [.command, .control])
                 .help("Toggle Zen Mode (^⌘F)")
@@ -490,16 +505,21 @@ struct ChapterEditorView: View {
             handleTextFormat(.checklist)
         case .quote:
             // Implement quote block formatting with visual styling
-            let mutableText = NSMutableAttributedString(attributedString: attributedText)
+            // CRITICAL: Get FRESH content from textStorage, not stale binding
+            guard let currentText = getCurrentTextStorageContent?() else {
+                print("❌ CRITICAL: Cannot get current textStorage content for quote block")
+                return
+            }
+            let mutableText = NSMutableAttributedString(attributedString: currentText)
 
             // Determine range (selected text or current paragraph)
             let targetRange: NSRange
             if textSelection.length > 0 {
                 // Use selection, but expand to full paragraphs
-                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             } else {
                 // Use current paragraph
-                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             }
 
             guard targetRange.location != NSNotFound && targetRange.length > 0 else { return }
@@ -537,7 +557,12 @@ struct ChapterEditorView: View {
             // Show link insertion sheet
             // Get selected text if any
             if textSelection.length > 0 {
-                currentSelection = (attributedText.string as NSString).substring(with: textSelection)
+                // CRITICAL: Get FRESH content from textStorage
+                if let freshText = getCurrentTextStorageContent?() {
+                    currentSelection = (freshText.string as NSString).substring(with: textSelection)
+                } else {
+                    currentSelection = ""
+                }
             } else {
                 currentSelection = ""
             }
@@ -577,7 +602,13 @@ struct ChapterEditorView: View {
     /// Handle text formatting from the format menu with intelligent toggling
     /// - Parameter format: The text format to apply or remove
     private func handleTextFormat(_ format: TextFormat) {
-        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+        // CRITICAL: Get FRESH content from textStorage, not stale binding
+        // This prevents race condition where typing hasn't updated binding yet
+        guard let currentText = getCurrentTextStorageContent?() else {
+            print("❌ CRITICAL: Cannot get current textStorage content")
+            return
+        }
+        let mutableText = NSMutableAttributedString(attributedString: currentText)
 
         // Track selection adjustment for operations that insert/delete text
         // Will be applied AFTER attributedText update to prevent restoration conflicts
@@ -593,7 +624,7 @@ struct ChapterEditorView: View {
                 targetRange = textSelection
             } else {
                 // Apply to current paragraph
-                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             }
             RichTextEditor.applyTextStyle(style, to: mutableText, range: targetRange)
             currentTextStyle = style
@@ -604,11 +635,11 @@ struct ChapterEditorView: View {
                 targetRange = textSelection
             } else {
                 // No selection - apply to current paragraph for convenience
-                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+                targetRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             }
 
             // CRITICAL: Detect formats FRESH from current text - don't trust stale activeFormats state
-            let currentFormats = RichTextEditor.detectActiveFormats(in: attributedText, at: textSelection)
+            let currentFormats = RichTextEditor.detectActiveFormats(in: currentText, at: textSelection)
             let isActive = currentFormats.contains(where: { existingFormat in
                 // For formats with associated values (colors), compare the base type
                 switch (format, existingFormat) {
@@ -630,10 +661,10 @@ struct ChapterEditorView: View {
 
         case .bulletList, .numberedList, .checklist:
             // Get the current paragraph range
-            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             guard paragraphRange.location != NSNotFound && paragraphRange.length > 0 else { break }
 
-            let paragraphText = (attributedText.string as NSString).substring(with: paragraphRange)
+            let paragraphText = (currentText.string as NSString).substring(with: paragraphRange)
 
             // Determine the new list marker
             let newMarker: String
@@ -708,12 +739,12 @@ struct ChapterEditorView: View {
 
         case .indent:
             // Apply indentation to current paragraph or selected paragraphs
-            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             RichTextEditor.applyIndent(to: mutableText, range: paragraphRange)
 
         case .outdent:
             // Remove indentation from current paragraph or selected paragraphs
-            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: attributedText)
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             RichTextEditor.applyOutdent(to: mutableText, range: paragraphRange)
         }
 
@@ -764,6 +795,23 @@ struct ChapterEditorView: View {
         // getAttributedContent() now has its own validation
         attributedText = chapter.getAttributedContent()
 
+        // APPLE NOTES BEHAVIOR: Initialize empty chapters with title-style formatting
+        // This ensures the first line is automatically styled as a title (28pt bold)
+        if attributedText.string.isEmpty {
+            // Create attributed string with title-style font
+            let titleFont = PlatformFont.systemFont(ofSize: 28, weight: .bold)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: titleFont,
+                .foregroundColor: PlatformColor.labelColor
+            ]
+            attributedText = NSAttributedString(string: "", attributes: attributes)
+
+            // Set current text style to title for format menu display
+            currentTextStyle = .title
+
+            print("📝 Initialized empty chapter with title-style formatting")
+        }
+
         // Auto-focus for immediate typing
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(100))
@@ -788,11 +836,19 @@ struct ChapterEditorView: View {
         // Create new save task with delay
         saveTask = Task { @MainActor in
             do {
-                // Wait for 500ms of inactivity before saving
-                try await Task.sleep(for: .milliseconds(500))
+                // INCREASED DELAY: Wait for 750ms of inactivity before saving
+                // This reduces rapid-fire saves during fast typing
+                try await Task.sleep(for: .milliseconds(750))
 
                 // Check if task was cancelled during sleep
                 guard !Task.isCancelled else { return }
+
+                // VALIDATION: Verify text hasn't changed since capture
+                // This prevents saving stale content if another update happened
+                guard text.string == attributedText.string else {
+                    print("⏭️ Skipping stale save - content changed during delay")
+                    return
+                }
 
                 // Perform the save
                 performSave(text, chapter: chapter)
@@ -805,21 +861,41 @@ struct ChapterEditorView: View {
         }
     }
 
-    /// Force an immediate save (for onDisappear, Cmd+S, backgrounding)
+    /// Force an immediate save (for onDisappear, Cmd+S, backgrounding, zen mode transitions)
     /// - Parameter chapter: The chapter to save
     private func forceSave(_ chapter: Chapter) {
         // Cancel any pending debounced save
         saveTask?.cancel()
         saveTask = nil
 
-        // Save immediately with current attributed text
-        print("🔒 Force saving chapter...")
-        chapter.setAttributedContent(attributedText)
+        // VALIDATION: Check chapter is valid for access
+        guard chapter.isValidForAccess else {
+            print("❌ Force save aborted: chapter not valid for access")
+            return
+        }
 
-        // Trigger SwiftData save
+        // CRITICAL FIX: Get FRESH content directly from text view
+        // The attributedText binding may be stale due to deferred updates in textDidChange
+        // Using getCurrentTextStorageContent() bypasses the binding and gets real-time content
+        let contentToSave: NSAttributedString
+        if let getCurrentContent = getCurrentTextStorageContent {
+            contentToSave = getCurrentContent()
+            print("🔒 Force saving (from text view directly)")
+        } else {
+            contentToSave = attributedText
+            print("🔒 Force saving (from binding - fallback)")
+        }
+
+        let contentLength = contentToSave.length
+        let contentHash = contentToSave.string.hashValue
+        print("   ID: \(chapter.id), length: \(contentLength), hash: \(contentHash)")
+
+        chapter.setAttributedContent(contentToSave)
+
+        // Trigger SwiftData save - SYNCHRONOUS on main actor
         do {
             try modelContext.save()
-            print("✅ Force save complete")
+            print("✅ Force save complete - verified \(chapter.content.count) chars written")
         } catch {
             print("❌ Force save failed: \(error.localizedDescription)")
         }
@@ -831,7 +907,15 @@ struct ChapterEditorView: View {
     ///   - chapter: The chapter to update
     @MainActor
     private func performSave(_ text: NSAttributedString, chapter: Chapter) {
-        print("💾 Auto-saving chapter...")
+        // VALIDATION: Check chapter is valid for access
+        guard chapter.isValidForAccess else {
+            print("❌ Auto-save aborted: chapter not valid for access")
+            return
+        }
+
+        let contentLength = text.length
+        let contentHash = text.string.hashValue
+        print("💾 Auto-saving chapter (ID: \(chapter.id), length: \(contentLength), hash: \(contentHash))...")
 
         // Update chapter with new content
         chapter.setAttributedContent(text)
@@ -847,7 +931,7 @@ struct ChapterEditorView: View {
         // Trigger SwiftData save
         do {
             try modelContext.save()
-            print("✅ Auto-save complete")
+            print("✅ Auto-save complete - verified \(chapter.content.count) chars written")
         } catch {
             print("❌ Auto-save failed: \(error.localizedDescription)")
         }
@@ -860,7 +944,12 @@ struct ChapterEditorView: View {
     ///   - url: The URL to link to
     ///   - displayText: The text to display for the link
     private func insertLink(url: String, displayText: String) {
-        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+        // CRITICAL: Get FRESH content from textStorage, not stale binding
+        guard let currentText = getCurrentTextStorageContent?() else {
+            print("❌ CRITICAL: Cannot get current textStorage content for link insertion")
+            return
+        }
+        let mutableText = NSMutableAttributedString(attributedString: currentText)
 
         // Create link attributes
         #if canImport(UIKit)
@@ -948,7 +1037,13 @@ struct ChapterEditorView: View {
 
         // Create attributed string from attachment
         let attachmentString = NSAttributedString(attachment: attachment)
-        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+
+        // CRITICAL: Get FRESH content from textStorage, not stale binding
+        guard let currentText = getCurrentTextStorageContent?() else {
+            print("❌ CRITICAL: Cannot get current textStorage content for image insertion")
+            return
+        }
+        let mutableText = NSMutableAttributedString(attributedString: currentText)
 
         // Insert at cursor position
         mutableText.insert(attachmentString, at: textSelection.location)
@@ -980,7 +1075,12 @@ struct ChapterEditorView: View {
     ///   - rows: Number of rows
     ///   - columns: Number of columns
     private func insertTable(rows: Int, columns: Int) {
-        let mutableText = NSMutableAttributedString(attributedString: attributedText)
+        // CRITICAL: Get FRESH content from textStorage, not stale binding
+        guard let currentText = getCurrentTextStorageContent?() else {
+            print("❌ CRITICAL: Cannot get current textStorage content for table insertion")
+            return
+        }
+        let mutableText = NSMutableAttributedString(attributedString: currentText)
 
         #if canImport(UIKit)
         let font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
@@ -1051,16 +1151,15 @@ struct ChapterEditorView: View {
     ///   - text: The mutable attributed string to modify
     ///   - range: The range to apply quote styling to
     private func applyQuoteBlockStyling(to text: NSMutableAttributedString, range: NSRange) {
-        // REDESIGNED: Pure paragraph-style approach without visual markers
-        // The typingAttributes system now ensures these attributes persist when typing
+        // REDESIGNED: Paragraph-style approach WITH visual markers for clarity
+        // The typingAttributes system ensures attributes persist when typing
+        // Visual markers ("┃ ") provide clear quote block indication
 
         // Create paragraph style with distinctive indentation
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.headIndent = 20 // Left indentation
         paragraphStyle.firstLineHeadIndent = 20
         paragraphStyle.tailIndent = -10 // Right margin
-        // Use tab stops to create visual separation
-        paragraphStyle.tabStops = [NSTextTab(textAlignment: .left, location: 20)]
 
         #if canImport(UIKit)
         // Get current font at range start to preserve size, then make italic
@@ -1081,6 +1180,23 @@ struct ChapterEditorView: View {
             .foregroundColor: UIColor.secondaryLabel, // Slightly muted text
             .font: italicFont
         ], range: range)
+
+        // Add visual left border using "┃ " marker at paragraph start
+        // Insert markers at the beginning of each line in the range
+        let paragraphRanges = getParagraphRanges(in: text, for: range)
+        var offset = 0
+        for paragraphRange in paragraphRanges {
+            let adjustedLocation = paragraphRange.location + offset
+            let borderMarker = NSAttributedString(
+                string: "┃ ",
+                attributes: [
+                    .foregroundColor: UIColor.systemBlue,
+                    .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+                ]
+            )
+            text.insert(borderMarker, at: adjustedLocation)
+            offset += 2 // Account for inserted characters
+        }
         #else
         // macOS version
         let currentFont: NSFont
@@ -1098,6 +1214,22 @@ struct ChapterEditorView: View {
             .foregroundColor: NSColor.secondaryLabelColor, // Slightly muted text
             .font: italicFont
         ], range: range)
+
+        // Add visual left border
+        let paragraphRanges = getParagraphRanges(in: text, for: range)
+        var offset = 0
+        for paragraphRange in paragraphRanges {
+            let adjustedLocation = paragraphRange.location + offset
+            let borderMarker = NSAttributedString(
+                string: "┃ ",
+                attributes: [
+                    .foregroundColor: NSColor.systemBlue,
+                    .font: NSFont.systemFont(ofSize: 17, weight: .semibold)
+                ]
+            )
+            text.insert(borderMarker, at: adjustedLocation)
+            offset += 2
+        }
         #endif
     }
 
@@ -1106,8 +1238,25 @@ struct ChapterEditorView: View {
     ///   - text: The mutable attributed string to modify
     ///   - range: The range to remove quote styling from
     private func removeQuoteBlockStyling(from text: NSMutableAttributedString, range: NSRange) {
-        // REDESIGNED: Simple attribute reset without marker deletion
-        // No visual markers to remove anymore
+        // Remove border markers first (before resetting attributes)
+        let paragraphRanges = getParagraphRanges(in: text, for: range)
+        var offset = 0
+
+        for paragraphRange in paragraphRanges.reversed() {
+            let adjustedRange = NSRange(
+                location: paragraphRange.location - offset,
+                length: min(paragraphRange.length, text.length - (paragraphRange.location - offset))
+            )
+
+            if adjustedRange.location >= 0 && adjustedRange.location < text.length {
+                let paragraphText = (text.string as NSString).substring(with: adjustedRange)
+                if paragraphText.hasPrefix("┃ ") {
+                    let markerRange = NSRange(location: adjustedRange.location, length: 2)
+                    text.deleteCharacters(in: markerRange)
+                    offset += 2
+                }
+            }
+        }
 
         // Reset to default paragraph style and formatting
         let defaultParagraphStyle = NSMutableParagraphStyle()
@@ -1115,11 +1264,17 @@ struct ChapterEditorView: View {
         defaultParagraphStyle.firstLineHeadIndent = 0
         defaultParagraphStyle.tailIndent = 0
 
+        // Recalculate range after marker deletion
+        let adjustedRange = NSRange(
+            location: range.location,
+            length: min(range.length, text.length - range.location)
+        )
+
         #if canImport(UIKit)
         // Get current font to preserve size
         let currentFont: UIFont
-        if text.length > range.location {
-            currentFont = text.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont
+        if text.length > adjustedRange.location {
+            currentFont = text.attribute(.font, at: adjustedRange.location, effectiveRange: nil) as? UIFont
                 ?? UIFont.systemFont(ofSize: 17, weight: .regular)
         } else {
             currentFont = UIFont.systemFont(ofSize: 17, weight: .regular)
@@ -1132,12 +1287,12 @@ struct ChapterEditorView: View {
             .backgroundColor: UIColor.clear,
             .foregroundColor: UIColor.label,
             .font: regularFont
-        ], range: range)
+        ], range: adjustedRange)
         #else
         // macOS version
         let currentFont: NSFont
-        if text.length > range.location {
-            currentFont = text.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont
+        if text.length > adjustedRange.location {
+            currentFont = text.attribute(.font, at: adjustedRange.location, effectiveRange: nil) as? NSFont
                 ?? NSFont.systemFont(ofSize: 17, weight: .regular)
         } else {
             currentFont = NSFont.systemFont(ofSize: 17, weight: .regular)
@@ -1150,7 +1305,7 @@ struct ChapterEditorView: View {
             .backgroundColor: NSColor.clear,
             .foregroundColor: NSColor.labelColor,
             .font: regularFont
-        ], range: range)
+        ], range: adjustedRange)
         #endif
     }
 

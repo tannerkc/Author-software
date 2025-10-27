@@ -39,11 +39,27 @@ struct RichTextEditor: UIViewRepresentable {
     /// Called whenever the selection changes to update format button states
     var onAttributesChanged: ((Set<TextFormat>) -> Void)? = nil
 
+    /// CRITICAL: Binding to provide closure that gets current textStorage content (macOS only)
+    /// iOS doesn't need this since the original bug was macOS-specific
+    @Binding var getCurrentContent: (() -> NSAttributedString)?
+
     func makeUIView(context: Context) -> UITextView {
         // Return the coordinator's persistent text view instance
         // This ensures the same UITextView is reused across SwiftUI updates
         // makeUIView is only called ONCE when the view is first created
-        return context.coordinator.textView
+        let textView = context.coordinator.textView
+
+        // CRITICAL: Provide closure to get current textStorage content
+        // This prevents data loss when format is changed before binding updates (iOS consistency)
+        // MUST update via binding.wrappedValue, not parent.getCurrentContent (which is a struct copy)
+        context.coordinator.getCurrentContentBinding.wrappedValue = { [weak textView] in
+            guard let textView = textView else {
+                return NSAttributedString()
+            }
+            return NSAttributedString(attributedString: textView.attributedText)
+        }
+
+        return textView
     }
 
     func updateUIView(_ textView: UITextView, context: Context) {
@@ -124,6 +140,10 @@ struct RichTextEditor: UIViewRepresentable {
         var parent: RichTextEditor
         var isUpdatingFromUser = false
 
+        /// CRITICAL: Store the Binding itself to update the closure properly
+        /// Setting parent.getCurrentContent won't work because parent is a struct copy
+        var getCurrentContentBinding: Binding<(() -> NSAttributedString)?>
+
         /// Cache of the last text content we know about
         /// Used to prevent circular updates and detect genuine external changes
         var lastKnownText = ""
@@ -153,6 +173,8 @@ struct RichTextEditor: UIViewRepresentable {
 
         init(_ parent: RichTextEditor) {
             self.parent = parent
+            // CRITICAL: Store the Binding itself, not just the value
+            self.getCurrentContentBinding = parent.$getCurrentContent
             // Initialize with current text to avoid false external change detection
             self.lastKnownText = parent.attributedText.string
         }
@@ -585,6 +607,10 @@ struct RichTextEditor: NSViewRepresentable {
     var textDidChange: ((NSAttributedString) -> Void)?
     var selectionDidChange: ((NSRange) -> Void)?
 
+    /// CRITICAL: Binding to provide closure that gets current textStorage content
+    /// This ensures format changes always use fresh data, not stale binding
+    @Binding var getCurrentContent: (() -> NSAttributedString)?
+
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
 
@@ -601,6 +627,19 @@ struct RichTextEditor: NSViewRepresentable {
 
         // Set text container inset for padding (matches iOS version)
         textView.textContainerInset = NSSize(width: 20, height: 12)
+
+        // CRITICAL: Defer closure assignment to avoid "Modifying state during view update"
+        // Direct assignment causes SwiftUI state modification during view creation → binding never gets set
+        // Deferring to next run loop allows view to finish updating first
+        Task { @MainActor in
+            context.coordinator.getCurrentContentBinding.wrappedValue = { [weak textView] in
+                guard let textView = textView,
+                      let textStorage = textView.textStorage else {
+                    return NSAttributedString()
+                }
+                return NSAttributedString(attributedString: textStorage)
+            }
+        }
 
         // CRITICAL: Safe attributed text setting with validation
         // Prevents crashes when attributedText is invalid or empty
@@ -660,17 +699,44 @@ struct RichTextEditor: NSViewRepresentable {
                               !attributedText.isEqual(to: context.coordinator.lastSetAttributedString!)
 
             if shouldUpdate {
+                // CRITICAL: Set guard flag to prevent circular updates
+                // textViewDidChangeSelection will check this flag and skip binding updates
+                context.coordinator.isUpdatingTextView = true
+                defer { context.coordinator.isUpdatingTextView = false }
+
                 // Validate attributed text before setting
                 if attributedText.length >= 0 {
+                    let oldSelectedRange = textView.selectedRange()
+
+                    // Disable animations during update to prevent visual glitches
+                    NSAnimationContext.beginGrouping()
+                    NSAnimationContext.current.duration = 0
+
+                    // Batch all textStorage changes to prevent multiple layouts
+                    textStorage.beginEditing()
                     textStorage.setAttributedString(attributedText)
+                    textStorage.endEditing()
+
                     // Track what we set to prevent re-setting the same content
                     context.coordinator.lastSetAttributedString = attributedText
 
-                    // Update typing attributes to match current cursor position
-                    // This ensures formatting is preserved when user starts typing
-                    Task { @MainActor in
-                        context.coordinator.updateTypingAttributes(textView)
+                    // Restore selection WITHOUT triggering auto-scroll
+                    if oldSelectedRange.location != NSNotFound &&
+                       oldSelectedRange.location <= textStorage.length {
+                        textView.setSelectedRange(oldSelectedRange)
                     }
+
+                    // REMOVED: textView.scrollToVisible(visibleRect)
+                    // This was causing "layoutSubtreeIfNeeded" recursion errors
+                    // NSTextView naturally maintains scroll position during updates
+                    // Only manual scrolling (like find/replace) needs explicit scroll management
+
+                    NSAnimationContext.endGrouping()
+
+                    // CRITICAL: Immediately update typing attributes after format change
+                    // Ensures they're fresh and correct when user types
+                    // Don't rely on textViewDidChangeSelection - call directly
+                    context.coordinator.updateTypingAttributes(textView)
                 } else {
                     print("⚠️ WARNING: Invalid attributed text length, skipping update")
                 }
@@ -687,85 +753,133 @@ struct RichTextEditor: NSViewRepresentable {
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: RichTextEditor
 
+        /// CRITICAL: Store the Binding itself to update the closure properly
+        /// Setting parent.getCurrentContent won't work because parent is a struct copy
+        var getCurrentContentBinding: Binding<(() -> NSAttributedString)?>
+
         /// Flag to prevent circular updates between textDidChange and updateNSView
         /// When true, updateNSView will skip text updates to break the recursion cycle
         var isUpdatingFromUser = false
+
+        /// Flag to prevent circular updates during updateNSView
+        /// When true, textViewDidChangeSelection should not update the binding
+        var isUpdatingTextView = false
 
         /// Track the last attributed string we set to prevent unnecessary updates
         /// NSTextView can slightly modify attributed strings, so we track what we actually set
         var lastSetAttributedString: NSAttributedString?
 
+        /// Debounce task for text change updates
+        var textChangeDebounceTask: Task<Void, Never>?
+
         init(_ parent: RichTextEditor) {
             self.parent = parent
+            // CRITICAL: Store the Binding itself, not just the value
+            self.getCurrentContentBinding = parent.$getCurrentContent
         }
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
 
-            // CRITICAL: Set flag to prevent infinite recursion
-            // This prevents updateNSView from updating textStorage while we're updating the binding
-            isUpdatingFromUser = true
-            parent.attributedText = textView.attributedString()
-            parent.textDidChange?(textView.attributedString())
-            isUpdatingFromUser = false
+            // CRITICAL: Track immediately to prevent stale updates from overwriting fresh content
+            // This must happen synchronously before any async work
+            lastSetAttributedString = textView.attributedString()
+
+            // Cancel any pending update
+            textChangeDebounceTask?.cancel()
+
+            // CRITICAL FIX: Increased delay from immediate to 16ms (one frame)
+            // This ensures we're COMPLETELY outside the current render cycle
+            // Debouncing also prevents rapid-fire updates during fast typing
+            textChangeDebounceTask = Task { @MainActor in
+                // Wait one frame (16ms at 60Hz) to ensure view updates complete
+                try? await Task.sleep(for: .milliseconds(16))
+                guard !Task.isCancelled else { return }
+
+                // Set flag to prevent infinite recursion
+                self.isUpdatingFromUser = true
+                self.parent.attributedText = textView.attributedString()
+                self.parent.textDidChange?(textView.attributedString())
+                self.isUpdatingFromUser = false
+            }
         }
 
         func textViewDidChangeSelection(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
-            parent.selectedRange = textView.selectedRange()
-            parent.selectionDidChange?(textView.selectedRange())
 
-            // CRITICAL: Update typingAttributes to match formatting at cursor position
+            // CRITICAL: Always update typingAttributes, even during UI updates
             // This ensures newly typed characters inherit the current formatting
             updateTypingAttributes(textView)
+
+            // CRITICAL: Only update bindings when NOT during UI updates
+            // This prevents circular updates during updateNSView
+            guard !isUpdatingTextView else { return }
+
+            parent.selectedRange = textView.selectedRange()
+            parent.selectionDidChange?(textView.selectedRange())
         }
 
         /// Update NSTextView's typingAttributes to match attributes at cursor position
         /// This ensures that newly typed characters inherit the current formatting
+        /// CRITICAL: This is the single source of truth for typing attributes
         @MainActor
         func updateTypingAttributes(_ textView: NSTextView) {
-            guard let textStorage = textView.textStorage,
-                  textStorage.length > 0 else {
-                // Empty text - use defaults
+            guard let textStorage = textView.textStorage else {
+                // No text storage - use defaults
+                textView.typingAttributes = defaultTypingAttributes()
+                return
+            }
+
+            // Handle empty text storage
+            guard textStorage.length > 0 else {
                 textView.typingAttributes = defaultTypingAttributes()
                 return
             }
 
             // Determine position to sample attributes from
-            let sampleLocation: Int
             let selectedRange = textView.selectedRange()
+            let sampleLocation: Int
+
             if selectedRange.length > 0 {
                 // Selection exists - sample from start of selection
                 sampleLocation = selectedRange.location
             } else if selectedRange.location > 0 {
-                // Cursor position - sample from character before cursor
+                // Cursor position - sample from character BEFORE cursor
+                // This ensures we continue with the formatting of existing text
                 sampleLocation = selectedRange.location - 1
             } else {
-                // At the very beginning - sample from first character
+                // At the very beginning of document
+                // Sample from first character if it exists
                 sampleLocation = 0
             }
 
-            // Ensure valid location
+            // Validate sample location
             guard sampleLocation >= 0 && sampleLocation < textStorage.length else {
+                // Invalid location - use defaults
                 textView.typingAttributes = defaultTypingAttributes()
                 return
             }
 
-            // Get attributes at the sample location
+            // Get ALL attributes at the sample location
             let attributes = textStorage.attributes(at: sampleLocation, effectiveRange: nil)
 
-            // Build typing attributes from current attributes
-            // Start with defaults and override with current formatting
-            var typingAttributes = defaultTypingAttributes()
+            // Build typing attributes - preserve ALL formatting
+            var typingAttributes: [NSAttributedString.Key: Any] = [:]
 
             // Preserve font (includes bold, italic traits)
             if let font = attributes[.font] as? NSFont {
                 typingAttributes[.font] = font
+            } else {
+                // Always have a font
+                typingAttributes[.font] = NSFont.systemFont(ofSize: 17)
             }
 
             // Preserve text color
             if let foregroundColor = attributes[.foregroundColor] as? NSColor {
                 typingAttributes[.foregroundColor] = foregroundColor
+            } else {
+                // Always have a foreground color
+                typingAttributes[.foregroundColor] = NSColor.labelColor
             }
 
             // Preserve highlight (background color)
@@ -786,12 +900,12 @@ struct RichTextEditor: NSViewRepresentable {
                 typingAttributes[.strikethroughStyle] = strikethroughStyle
             }
 
-            // Preserve paragraph style (critical for quote blocks, lists, indentation)
+            // Preserve paragraph style (CRITICAL for quote blocks, lists, indentation)
             if let paragraphStyle = attributes[.paragraphStyle] as? NSParagraphStyle {
                 typingAttributes[.paragraphStyle] = paragraphStyle
             }
 
-            // Update the text view's typing attributes
+            // Apply the typing attributes
             textView.typingAttributes = typingAttributes
         }
 
@@ -801,6 +915,65 @@ struct RichTextEditor: NSViewRepresentable {
                 .font: NSFont.systemFont(ofSize: 17),
                 .foregroundColor: NSColor.labelColor
             ]
+        }
+
+        func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+            // Only intercept user typing, not programmatic updates
+            guard !isUpdatingTextView && !isUpdatingFromUser else {
+                return true
+            }
+
+            // Get replacement text - allow deletions
+            guard let text = replacementString, !text.isEmpty else {
+                return true
+            }
+
+            // Get text storage
+            guard let textStorage = textView.textStorage else {
+                return true
+            }
+
+            // CRITICAL: Use typingAttributes as single source of truth
+            // updateTypingAttributes has already set these correctly based on cursor position
+            // Don't re-sample from textStorage - creates conflicting logic
+            let attributesToUse = textView.typingAttributes
+
+            // Ensure we have valid attributes (fallback to defaults if somehow empty)
+            let finalAttributes: [NSAttributedString.Key: Any]
+            if attributesToUse.isEmpty {
+                finalAttributes = defaultTypingAttributes()
+            } else {
+                finalAttributes = attributesToUse
+            }
+
+            // Create attributed replacement with the correct formatting
+            let attributedReplacement = NSAttributedString(string: text, attributes: finalAttributes)
+
+            // Set flag to prevent circular updates
+            isUpdatingFromUser = true
+            defer { isUpdatingFromUser = false }
+
+            // Disable animations during typing to prevent visual glitches
+            NSAnimationContext.beginGrouping()
+            NSAnimationContext.current.duration = 0
+
+            // Batch the replacement to prevent multiple layouts
+            textStorage.beginEditing()
+            textStorage.replaceCharacters(in: affectedCharRange, with: attributedReplacement)
+            textStorage.endEditing()
+
+            // Update cursor position WITHOUT triggering auto-scroll
+            let newPosition = affectedCharRange.location + text.count
+            textView.setSelectedRange(NSRange(location: newPosition, length: 0))
+
+            // REMOVED: textView.scrollToVisible(visibleRect)
+            // This was causing layout recursion errors during typing
+            // NSTextView naturally scrolls to keep cursor visible
+
+            NSAnimationContext.endGrouping()
+
+            // Block default behavior (which doesn't preserve formatting correctly)
+            return false
         }
     }
 

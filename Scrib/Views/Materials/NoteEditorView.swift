@@ -19,6 +19,7 @@ struct NoteEditorView: View {
     @State private var showFormatMenu = false
     @State private var textSelection: NSRange = NSRange(location: 0, length: 0)
     @FocusState private var isEditorFocused: Bool
+    @State private var getCurrentTextStorageContent: (() -> NSAttributedString)?
     @State private var autoSaveTask: Task<Void, Never>?
 
     init(note: Note, viewModel: MaterialViewModel) {
@@ -33,7 +34,8 @@ struct NoteEditorView: View {
                 attributedText: $attributedContent,
                 selectedRange: $textSelection,
                 isFocused: $isEditorFocused,
-                isEditable: true
+                isEditable: true,
+                getCurrentContent: $getCurrentTextStorageContent
             )
             .onChange(of: attributedContent) { _, newValue in
                 scheduleAutoSave(newValue)

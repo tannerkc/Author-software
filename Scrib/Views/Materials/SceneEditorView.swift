@@ -21,6 +21,9 @@ struct SceneEditorView: View {
     @State private var textSelection: NSRange = NSRange(location: 0, length: 0)
     @FocusState private var isEditorFocused: Bool
 
+    /// Closure to get current textStorage content
+    @State private var getCurrentTextStorageContent: (() -> NSAttributedString)?
+
     @State private var autoSaveTask: Task<Void, Never>?
 
     init(scene: Scene, viewModel: MaterialViewModel) {
@@ -45,7 +48,8 @@ struct SceneEditorView: View {
                     attributedText: $attributedContent,
                     selectedRange: $textSelection,
                     isFocused: $isEditorFocused,
-                    isEditable: true
+                    isEditable: true,
+                    getCurrentContent: $getCurrentTextStorageContent
                 )
                 .onChange(of: attributedContent) { _, newValue in
                     scheduleAutoSave(newValue)

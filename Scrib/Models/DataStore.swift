@@ -68,7 +68,8 @@ final class DataStore {
     ///
     /// Generates a sample book with two chapters to help with initial development
     /// and UI testing. Call this method on first launch or for preview purposes.
-    func createSampleData() {
+    /// PERFORMANCE: Made async with yields to avoid blocking main thread
+    func createSampleData() async {
         // Check if data already exists
         let descriptor = FetchDescriptor<Book>()
         let existingBooks = (try? modelContext.fetch(descriptor)) ?? []
@@ -77,6 +78,9 @@ final class DataStore {
             print("Sample data already exists, skipping creation")
             return
         }
+
+        // PERFORMANCE: Yield to allow UI updates
+        await Task.yield()
 
         // Create sample book
         let book = Book(
@@ -118,6 +122,9 @@ final class DataStore {
             content: "",
             order: 2
         )
+
+        // PERFORMANCE: Yield to allow UI updates
+        await Task.yield()
 
         // Create sample scene
         let scene1 = Scene(
@@ -174,6 +181,9 @@ final class DataStore {
             tags: ["opening", "setup"]
         )
 
+        // PERFORMANCE: Yield before relationship setup
+        await Task.yield()
+
         // Establish relationships
         book.chapters = [chapter1, chapter2, chapter3]
         book.scenes = [scene1]
@@ -191,8 +201,14 @@ final class DataStore {
         character1.book = book
         metadata1.chapter = chapter1
 
+        // PERFORMANCE: Yield before heavy operations
+        await Task.yield()
+
         // Insert into context
         modelContext.insert(book)
+
+        // PERFORMANCE: Yield before save
+        await Task.yield()
 
         // Save changes
         do {
@@ -234,9 +250,13 @@ final class DataStore {
 // MARK: - Preview Helper
 extension DataStore {
     /// Create a data store pre-populated with sample data for SwiftUI previews
+    /// PERFORMANCE: Synchronous version for previews (they don't support async)
     static func preview() -> DataStore {
         let store = DataStore(inMemory: true)
-        store.createSampleData()
+        // Use Task to bridge async to sync for previews only
+        Task { @MainActor in
+            await store.createSampleData()
+        }
         return store
     }
 }

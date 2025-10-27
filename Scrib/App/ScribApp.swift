@@ -21,8 +21,11 @@ struct ScribApp: App {
     /// Track whether this is the first launch
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
 
+    /// Show splash screen on startup for professional loading experience
+    @State private var showingSplashScreen = true
+
     init() {
-        // Initialize model container
+        // Initialize model container with optimized configuration
         let schema = Schema([
             Book.self,
             Chapter.self,
@@ -32,10 +35,21 @@ struct ScribApp: App {
             ResearchItem.self,
             Character.self
         ])
-        let configuration = ModelConfiguration(schema: schema)
+
+        // PERFORMANCE: Optimized ModelConfiguration
+        // - allowsSave: true (default, but explicit)
+        // - isStoredInMemoryOnly: false (persisted to disk)
+        // - cloudKitDatabase: .none (disable CloudKit sync for faster initialization)
+        let configuration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            allowsSave: true,
+            cloudKitDatabase: .none
+        )
 
         do {
             modelContainer = try ModelContainer(for: schema, configurations: [configuration])
+            print("✅ ModelContainer initialized successfully")
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }
@@ -43,16 +57,59 @@ struct ScribApp: App {
 
     var body: some SwiftUI.Scene {
         WindowGroup {
-            ContentView()
-                .modelContainer(modelContainer)
-                .task {
-                    // Create sample data on first launch
-                    if !hasLaunchedBefore {
-                        let dataStore = DataStore(container: modelContainer)
-                        dataStore.createSampleData()
-                        hasLaunchedBefore = true
+            ZStack {
+                // Main content view
+                ContentView()
+                    .modelContainer(modelContainer)
+                    .opacity(showingSplashScreen ? 0 : 1)
+                    .task {
+                        // PERFORMANCE: Splash fade happens FIRST
+                        // UI becomes interactive IMMEDIATELY
+                        try? await Task.sleep(for: .milliseconds(100))
+                        guard !Task.isCancelled else { return }
+
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showingSplashScreen = false
+                        }
+                        print("⚡ UI now interactive")
+
+                        // CRITICAL: Create sample data AFTER UI is interactive
+                        // User can click and interact while this runs
+                        if !hasLaunchedBefore {
+                            // Additional delay to ensure user sees interactive UI first
+                            try? await Task.sleep(for: .milliseconds(200))
+                            guard !Task.isCancelled else { return }
+
+                            let dataStore = DataStore(container: modelContainer)
+                            await dataStore.createSampleData()
+                            hasLaunchedBefore = true
+                            print("✅ Sample data created after UI ready")
+                        }
                     }
+
+                // PERFORMANCE: Instant splash screen
+                // Shows immediately (<16ms) while data loads in background
+                if showingSplashScreen {
+                    VStack(spacing: 20) {
+                        Image(systemName: "book.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.blue)
+
+                        Text("Scrib")
+                            .font(.title.bold())
+
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .scaleEffect(1.2)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    #if os(macOS)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    #else
+                    .background(Color(uiColor: .systemBackground))
+                    #endif
                 }
+            }
         }
         #if os(macOS)
         // MARK: - macOS Toolbar Configuration (Apple Notes style)
