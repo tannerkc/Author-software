@@ -85,6 +85,10 @@ struct RichTextEditor: UIViewRepresentable {
             if textContentChanged && isFocused.wrappedValue && !textView.isFirstResponder {
                 textView.becomeFirstResponder()
             }
+
+            // Update typing attributes to match current cursor position
+            // This ensures formatting is preserved when user starts typing
+            context.coordinator.updateTypingAttributes(textView)
         }
 
         // Update editability
@@ -182,6 +186,10 @@ struct RichTextEditor: UIViewRepresentable {
             // Update selected range synchronously
             parent.selectedRange = textView.selectedRange
 
+            // CRITICAL: Update typingAttributes to match formatting at cursor position
+            // This ensures newly typed characters inherit the current formatting
+            updateTypingAttributes(textView)
+
             // Report current text attributes at selection for format button states
             if let callback = parent.onAttributesChanged {
                 let activeFormats = RichTextEditor.detectActiveFormats(
@@ -190,6 +198,78 @@ struct RichTextEditor: UIViewRepresentable {
                 )
                 callback(activeFormats)
             }
+        }
+
+        /// Update UITextView's typingAttributes to match attributes at cursor position
+        /// This ensures that newly typed characters inherit the current formatting
+        private func updateTypingAttributes(_ textView: UITextView) {
+            guard textView.attributedText.length > 0 else {
+                // Empty text - use defaults
+                textView.typingAttributes = defaultTypingAttributes()
+                return
+            }
+
+            // Determine position to sample attributes from
+            let sampleLocation: Int
+            if textView.selectedRange.length > 0 {
+                // Selection exists - sample from start of selection
+                sampleLocation = textView.selectedRange.location
+            } else if textView.selectedRange.location > 0 {
+                // Cursor position - sample from character before cursor
+                sampleLocation = textView.selectedRange.location - 1
+            } else {
+                // At the very beginning - sample from first character
+                sampleLocation = 0
+            }
+
+            // Ensure valid location
+            guard sampleLocation >= 0 && sampleLocation < textView.attributedText.length else {
+                textView.typingAttributes = defaultTypingAttributes()
+                return
+            }
+
+            // Get attributes at the sample location
+            let attributes = textView.attributedText.attributes(at: sampleLocation, effectiveRange: nil)
+
+            // Build typing attributes from current attributes
+            // Start with defaults and override with current formatting
+            var typingAttributes = defaultTypingAttributes()
+
+            // Preserve font (includes bold, italic traits)
+            if let font = attributes[.font] as? UIFont {
+                typingAttributes[.font] = font
+            }
+
+            // Preserve text color
+            if let foregroundColor = attributes[.foregroundColor] as? UIColor {
+                typingAttributes[.foregroundColor] = foregroundColor
+            }
+
+            // Preserve highlight (background color)
+            if let backgroundColor = attributes[.backgroundColor] as? UIColor,
+               backgroundColor != .clear && backgroundColor.cgColor.alpha > 0 {
+                typingAttributes[.backgroundColor] = backgroundColor
+            }
+
+            // Preserve underline
+            if let underlineStyle = attributes[.underlineStyle] as? Int,
+               underlineStyle > 0 {
+                typingAttributes[.underlineStyle] = underlineStyle
+            }
+
+            // Preserve strikethrough
+            if let strikethroughStyle = attributes[.strikethroughStyle] as? Int,
+               strikethroughStyle > 0 {
+                typingAttributes[.strikethroughStyle] = strikethroughStyle
+            }
+
+            // Preserve paragraph style (critical for quote blocks, lists, indentation)
+            if let paragraphStyle = attributes[.paragraphStyle] as? NSParagraphStyle {
+                typingAttributes[.paragraphStyle] = paragraphStyle
+            }
+
+            // Update the text view's typing attributes
+            textView.typingAttributes = typingAttributes
         }
 
         func textViewDidBeginEditing(_ textView: UITextView) {
@@ -585,6 +665,12 @@ struct RichTextEditor: NSViewRepresentable {
                     textStorage.setAttributedString(attributedText)
                     // Track what we set to prevent re-setting the same content
                     context.coordinator.lastSetAttributedString = attributedText
+
+                    // Update typing attributes to match current cursor position
+                    // This ensures formatting is preserved when user starts typing
+                    Task { @MainActor in
+                        context.coordinator.updateTypingAttributes(textView)
+                    }
                 } else {
                     print("⚠️ WARNING: Invalid attributed text length, skipping update")
                 }
@@ -628,28 +714,285 @@ struct RichTextEditor: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             parent.selectedRange = textView.selectedRange()
             parent.selectionDidChange?(textView.selectedRange())
+
+            // CRITICAL: Update typingAttributes to match formatting at cursor position
+            // This ensures newly typed characters inherit the current formatting
+            updateTypingAttributes(textView)
+        }
+
+        /// Update NSTextView's typingAttributes to match attributes at cursor position
+        /// This ensures that newly typed characters inherit the current formatting
+        @MainActor
+        func updateTypingAttributes(_ textView: NSTextView) {
+            guard let textStorage = textView.textStorage,
+                  textStorage.length > 0 else {
+                // Empty text - use defaults
+                textView.typingAttributes = defaultTypingAttributes()
+                return
+            }
+
+            // Determine position to sample attributes from
+            let sampleLocation: Int
+            let selectedRange = textView.selectedRange()
+            if selectedRange.length > 0 {
+                // Selection exists - sample from start of selection
+                sampleLocation = selectedRange.location
+            } else if selectedRange.location > 0 {
+                // Cursor position - sample from character before cursor
+                sampleLocation = selectedRange.location - 1
+            } else {
+                // At the very beginning - sample from first character
+                sampleLocation = 0
+            }
+
+            // Ensure valid location
+            guard sampleLocation >= 0 && sampleLocation < textStorage.length else {
+                textView.typingAttributes = defaultTypingAttributes()
+                return
+            }
+
+            // Get attributes at the sample location
+            let attributes = textStorage.attributes(at: sampleLocation, effectiveRange: nil)
+
+            // Build typing attributes from current attributes
+            // Start with defaults and override with current formatting
+            var typingAttributes = defaultTypingAttributes()
+
+            // Preserve font (includes bold, italic traits)
+            if let font = attributes[.font] as? NSFont {
+                typingAttributes[.font] = font
+            }
+
+            // Preserve text color
+            if let foregroundColor = attributes[.foregroundColor] as? NSColor {
+                typingAttributes[.foregroundColor] = foregroundColor
+            }
+
+            // Preserve highlight (background color)
+            if let backgroundColor = attributes[.backgroundColor] as? NSColor,
+               backgroundColor != .clear && backgroundColor.alphaComponent > 0 {
+                typingAttributes[.backgroundColor] = backgroundColor
+            }
+
+            // Preserve underline
+            if let underlineStyle = attributes[.underlineStyle] as? Int,
+               underlineStyle > 0 {
+                typingAttributes[.underlineStyle] = underlineStyle
+            }
+
+            // Preserve strikethrough
+            if let strikethroughStyle = attributes[.strikethroughStyle] as? Int,
+               strikethroughStyle > 0 {
+                typingAttributes[.strikethroughStyle] = strikethroughStyle
+            }
+
+            // Preserve paragraph style (critical for quote blocks, lists, indentation)
+            if let paragraphStyle = attributes[.paragraphStyle] as? NSParagraphStyle {
+                typingAttributes[.paragraphStyle] = paragraphStyle
+            }
+
+            // Update the text view's typing attributes
+            textView.typingAttributes = typingAttributes
+        }
+
+        /// Default typing attributes for body text
+        private func defaultTypingAttributes() -> [NSAttributedString.Key: Any] {
+            [
+                .font: NSFont.systemFont(ofSize: 17),
+                .foregroundColor: NSColor.labelColor
+            ]
         }
     }
 
     // Static helper methods (stubs for macOS)
-    static func detectActiveFormats(in text: NSAttributedString, at range: NSRange) -> Set<TextFormat> {
-        return []
+    static func detectActiveFormats(in attributedText: NSAttributedString, at range: NSRange) -> Set<TextFormat> {
+        var activeFormats = Set<TextFormat>()
+
+        // Handle empty text
+        guard attributedText.length > 0 else {
+            return activeFormats
+        }
+
+        // Determine the position to check attributes
+        // For a selection, check the start; for a cursor, check the character before
+        let checkLocation: Int
+        if range.length > 0 {
+            // Selection: check attributes at the start of selection
+            checkLocation = range.location
+        } else if range.location > 0 {
+            // Cursor: check attributes of character before cursor
+            checkLocation = range.location - 1
+        } else {
+            // At the very beginning
+            checkLocation = 0
+        }
+
+        // Ensure valid location
+        guard checkLocation >= 0 && checkLocation < attributedText.length else {
+            return activeFormats
+        }
+
+        // Get attributes at the location
+        let attributes = attributedText.attributes(at: checkLocation, effectiveRange: nil)
+
+        // Check for font traits (bold, italic)
+        if let font = attributes[.font] as? NSFont {
+            let traits = font.fontDescriptor.symbolicTraits
+
+            if traits.contains(.bold) {
+                activeFormats.insert(.bold)
+            }
+
+            if traits.contains(.italic) {
+                activeFormats.insert(.italic)
+            }
+        }
+
+        // Check for underline
+        if let underlineStyle = attributes[.underlineStyle] as? Int,
+           underlineStyle > 0 {
+            activeFormats.insert(.underline)
+        }
+
+        // Check for strikethrough
+        if let strikethroughStyle = attributes[.strikethroughStyle] as? Int,
+           strikethroughStyle > 0 {
+            activeFormats.insert(.strikethrough)
+        }
+
+        // Check for background color (highlight)
+        if let backgroundColor = attributes[.backgroundColor] as? NSColor,
+           backgroundColor != .clear && backgroundColor.alphaComponent > 0 {
+            activeFormats.insert(.highlight(Color(nsColor: backgroundColor)))
+        }
+
+        // Check for text color
+        if let foregroundColor = attributes[.foregroundColor] as? NSColor,
+           foregroundColor != .labelColor {
+            activeFormats.insert(.textColor(Color(nsColor: foregroundColor)))
+        }
+
+        // Check for list formatting by examining the current paragraph
+        let paragraphRange = paragraphRange(for: range, in: attributedText)
+        if paragraphRange.location != NSNotFound && paragraphRange.length > 0 {
+            let paragraphText = (attributedText.string as NSString).substring(with: paragraphRange)
+
+            // Detect bullet list: starts with "• "
+            if paragraphText.hasPrefix("• ") {
+                activeFormats.insert(.bulletList)
+            }
+            // Detect numbered list: starts with number pattern like "1. ", "2. ", etc.
+            else if paragraphText.range(of: "^\\d+\\.\\s", options: .regularExpression) != nil {
+                activeFormats.insert(.numberedList)
+            }
+            // Detect checklist: starts with "☐ " or "☑ "
+            else if paragraphText.hasPrefix("☐ ") || paragraphText.hasPrefix("☑ ") {
+                activeFormats.insert(.checklist)
+            }
+        }
+
+        return activeFormats
     }
 
-    static func paragraphRange(for range: NSRange, in text: NSAttributedString) -> NSRange {
-        return range
+    static func paragraphRange(for selectedRange: NSRange, in text: NSAttributedString) -> NSRange {
+        let string = text.string as NSString
+        return string.paragraphRange(for: selectedRange)
     }
 
-    static func applyTextStyle(_ style: TextStyle, to text: NSMutableAttributedString, range: NSRange) {
-        // Stub implementation
+    static func applyTextStyle(_ style: TextStyle, to attributedText: NSMutableAttributedString, range: NSRange) {
+        let font: NSFont
+
+        switch style {
+        case .title:
+            font = .systemFont(ofSize: 28, weight: .bold)
+        case .heading:
+            font = .systemFont(ofSize: 22, weight: .bold)
+        case .subheading:
+            font = .systemFont(ofSize: 18, weight: .semibold)
+        case .body:
+            font = .systemFont(ofSize: 17, weight: .regular)
+        case .monospaced:
+            font = .monospacedSystemFont(ofSize: 17, weight: .regular)
+        }
+
+        attributedText.addAttribute(.font, value: font, range: range)
     }
 
-    static func removeCharacterFormat(_ format: TextFormat, from text: NSMutableAttributedString, range: NSRange) {
-        // Stub implementation
+    static func removeCharacterFormat(_ format: TextFormat, from attributedText: NSMutableAttributedString, range: NSRange) {
+        guard range.length > 0 else { return }
+
+        switch format {
+        case .bold:
+            // Remove bold trait from font
+            attributedText.enumerateAttribute(.font, in: range) { value, subrange, _ in
+                if let currentFont = value as? NSFont {
+                    let regularFont = NSFontManager.shared.convert(currentFont, toNotHaveTrait: .boldFontMask)
+                    attributedText.addAttribute(.font, value: regularFont, range: subrange)
+                }
+            }
+
+        case .italic:
+            attributedText.enumerateAttribute(.font, in: range) { value, subrange, _ in
+                if let currentFont = value as? NSFont {
+                    let regularFont = NSFontManager.shared.convert(currentFont, toNotHaveTrait: .italicFontMask)
+                    attributedText.addAttribute(.font, value: regularFont, range: subrange)
+                }
+            }
+
+        case .underline:
+            attributedText.removeAttribute(.underlineStyle, range: range)
+
+        case .strikethrough:
+            attributedText.removeAttribute(.strikethroughStyle, range: range)
+
+        case .highlight:
+            attributedText.removeAttribute(.backgroundColor, range: range)
+
+        case .textColor:
+            // Reset to default label color
+            attributedText.addAttribute(.foregroundColor, value: NSColor.labelColor, range: range)
+
+        default:
+            break
+        }
     }
 
-    static func applyCharacterFormat(_ format: TextFormat, to text: NSMutableAttributedString, range: NSRange) {
-        // Stub implementation
+    static func applyCharacterFormat(_ format: TextFormat, to attributedText: NSMutableAttributedString, range: NSRange) {
+        guard range.length > 0 else { return }
+
+        switch format {
+        case .bold:
+            // Get current font and make it bold
+            attributedText.enumerateAttribute(.font, in: range) { value, subrange, _ in
+                if let currentFont = value as? NSFont {
+                    let boldFont = NSFontManager.shared.convert(currentFont, toHaveTrait: .boldFontMask)
+                    attributedText.addAttribute(.font, value: boldFont, range: subrange)
+                }
+            }
+
+        case .italic:
+            attributedText.enumerateAttribute(.font, in: range) { value, subrange, _ in
+                if let currentFont = value as? NSFont {
+                    let italicFont = NSFontManager.shared.convert(currentFont, toHaveTrait: .italicFontMask)
+                    attributedText.addAttribute(.font, value: italicFont, range: subrange)
+                }
+            }
+
+        case .underline:
+            attributedText.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+
+        case .strikethrough:
+            attributedText.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+
+        case .highlight(let color):
+            attributedText.addAttribute(.backgroundColor, value: NSColor(color), range: range)
+
+        case .textColor(let color):
+            attributedText.addAttribute(.foregroundColor, value: NSColor(color), range: range)
+
+        default:
+            break
+        }
     }
 
     static func applyIndent(to attributedText: NSMutableAttributedString, range: NSRange, indentIncrement: CGFloat = 20) {

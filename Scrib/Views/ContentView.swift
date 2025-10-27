@@ -71,6 +71,47 @@ struct ContentView: View {
         }
     }
 
+    /// Get preview text for a chapter, with contextual search preview when searching
+    private func previewText(for chapter: Chapter) -> String {
+        if chapterSearchText.isEmpty {
+            // No search: show first 100 chars of content
+            let preview = chapter.content.prefix(100)
+            return String(preview)
+        } else {
+            // Search active: use contextual preview
+            return chapter.contextualPreview(for: chapterSearchText)
+        }
+    }
+
+    /// Create highlighted preview with search terms bolded
+    private func highlightedPreview(for chapter: Chapter) -> AttributedString {
+        let preview = previewText(for: chapter)
+        var attributedString = AttributedString(preview)
+
+        // Only highlight if we have search text
+        guard !chapterSearchText.isEmpty else {
+            return attributedString
+        }
+
+        // Find and highlight all occurrences of search text (case-insensitive)
+        let lowercasedPreview = preview.lowercased()
+        let lowercasedSearch = chapterSearchText.lowercased()
+
+        var searchStartIndex = lowercasedPreview.startIndex
+        while let range = lowercasedPreview.range(of: lowercasedSearch, range: searchStartIndex..<lowercasedPreview.endIndex) {
+            // Convert String range to AttributedString range
+            if let attributedRange = Range<AttributedString.Index>(range, in: attributedString) {
+                attributedString[attributedRange].foregroundColor = .primary
+                attributedString[attributedRange].font = .caption.bold()
+            }
+
+            // Move to next potential match
+            searchStartIndex = range.upperBound
+        }
+
+        return attributedString
+    }
+
     /// Handle chapter selection from inspector or other sources
     /// - Parameter chapter: The chapter to select
     private func handleChapterSelection(_ chapter: Chapter) {
@@ -159,8 +200,10 @@ struct ContentView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(chapter.title.isEmpty ? "Untitled" : chapter.title)
                                     .font(.headline)
-                                if !chapter.content.isEmpty {
-                                    Text(chapter.content)
+
+                                let preview = previewText(for: chapter)
+                                if !preview.isEmpty {
+                                    Text(highlightedPreview(for: chapter))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
@@ -187,21 +230,24 @@ struct ContentView: View {
                     }
 
                 } detail: {
-                    // DETAIL: Editor - Keep existing ChapterEditorView
-                    if let chapter = selectedChapter {
-                        ChapterEditorView(
-                            chapter: chapter,
-                            searchText: $chapterSearchText,
-                            isZenModeEnabled: $isZenModeEnabled,
-                            onChapterSelect: handleChapterSelection
-                        )
-                        .id(chapter.id)
-                        // .id() is REQUIRED to properly reset view state when switching chapters
-                        // Without it, onAppear doesn't fire and old content remains visible
-                        // The cached chapters approach prevents the infinite recursion that .id() previously caused
-                    } else {
-                        Text("Select a chapter to begin writing")
-                            .foregroundStyle(.secondary)
+                    // DETAIL: Editor - Wrapped in NavigationStack for separate toolbar (Apple Notes pattern)
+                    // This creates a distinct toolbar area for the editor column
+                    NavigationStack {
+                        if let chapter = selectedChapter {
+                            ChapterEditorView(
+                                chapter: chapter,
+                                searchText: $chapterSearchText,
+                                isZenModeEnabled: $isZenModeEnabled,
+                                onChapterSelect: handleChapterSelection
+                            )
+                            .id(chapter.id)
+                            // .id() is REQUIRED to properly reset view state when switching chapters
+                            // Without it, onAppear doesn't fire and old content remains visible
+                            // The cached chapters approach prevents the infinite recursion that .id() previously caused
+                        } else {
+                            Text("Select a chapter to begin writing")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 .navigationSplitViewStyle(.balanced)

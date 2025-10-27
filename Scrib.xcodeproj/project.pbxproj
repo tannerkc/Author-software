@@ -39,6 +39,7 @@
 		6C17D2A92EAEACF300EA2C6B /* AdaptiveKeyboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2772EAEACF300EA2C6B /* AdaptiveKeyboardToolbar.swift */; };
 		6C17D2AB2EAFD4C200EA2C6B /* LinkInsertionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2AA2EAFD4C200EA2C6B /* LinkInsertionSheet.swift */; };
 		6C17D2AD2EAFD7C600EA2C6B /* TableInsertionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2AC2EAFD7C600EA2C6B /* TableInsertionSheet.swift */; };
+		6C17D2AF2EAFDB1B00EA2C6B /* FormatPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C17D2AE2EAFDB1B00EA2C6B /* FormatPopoverView.swift */; };
 		A001 /* ScribApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* ScribApp.swift */; };
 		A002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* ContentView.swift */; };
 		A003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B003 /* Assets.xcassets */; };
@@ -117,6 +118,7 @@
 		6C17D2902EAEACF300EA2C6B /* SceneListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneListView.swift; sourceTree = "<group>"; };
 		6C17D2AA2EAFD4C200EA2C6B /* LinkInsertionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkInsertionSheet.swift; sourceTree = "<group>"; };
 		6C17D2AC2EAFD7C600EA2C6B /* TableInsertionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableInsertionSheet.swift; sourceTree = "<group>"; };
+		6C17D2AE2EAFDB1B00EA2C6B /* FormatPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatPopoverView.swift; sourceTree = "<group>"; };
 		6D5AE01CC1F9BDA062A10636 /* ResearchItemCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchItemCard.swift; sourceTree = "<group>"; };
 		7F32FF5B46BF7DD5CDA339CB /* ChapterMetadataSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterMetadataSection.swift; sourceTree = "<group>"; };
 		A399B2B3075EFF101BB8EDC3 /* CollapsibleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapsibleSection.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 		6C17D27F2EAEACF300EA2C6B /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				6C17D2AE2EAFDB1B00EA2C6B /* FormatPopoverView.swift */,
 				6C17D2AC2EAFD7C600EA2C6B /* TableInsertionSheet.swift */,
 				6C17D2AA2EAFD4C200EA2C6B /* LinkInsertionSheet.swift */,
 				6C17D2772EAEACF300EA2C6B /* AdaptiveKeyboardToolbar.swift */,
@@ -517,6 +520,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C17D2AF2EAFDB1B00EA2C6B /* FormatPopoverView.swift in Sources */,
 				A001 /* ScribApp.swift in Sources */,
 				A002 /* ContentView.swift in Sources */,
 				A004 /* Book.swift in Sources */,

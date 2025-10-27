@@ -54,6 +54,13 @@ struct ScribApp: App {
                     }
                 }
         }
+        #if os(macOS)
+        // MARK: - macOS Toolbar Configuration (Apple Notes style)
+        // Enables separate toolbars for each column in NavigationSplitView
+        // The .unified style with showsTitle: false creates distinct toolbar areas
+        // for sidebar, content, and detail columns
+        .windowToolbarStyle(.unified(showsTitle: false))
+        #endif
 
         #if os(macOS)
         // macOS-specific settings window

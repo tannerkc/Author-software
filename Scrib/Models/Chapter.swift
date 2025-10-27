@@ -145,10 +145,23 @@ final class Chapter {
             return contentPreview
         }
 
-        let searchContent = content.lowercased()
         let searchQuery = searchText.lowercased()
 
-        // Find first occurrence of search text
+        // First check if search text is in the title property
+        // This matches the filtering logic which checks both title and content
+        if title.lowercased().contains(searchQuery) {
+            // If match is in title, show the title plus some content
+            let titleText = title
+            let bodyPreview = bodyContent.prefix(50).replacingOccurrences(of: "\n", with: " ")
+            if !bodyPreview.isEmpty {
+                return "\(titleText) - \(bodyPreview)..."
+            } else {
+                return titleText
+            }
+        }
+
+        // If not in title, search in content
+        let searchContent = content.lowercased()
         guard let range = searchContent.range(of: searchQuery) else {
             return contentPreview
         }

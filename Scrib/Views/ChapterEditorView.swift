@@ -79,6 +79,11 @@ struct ChapterEditorView: View {
     /// Format menu visibility
     @State private var showingFormatMenu = false
 
+    #if os(macOS)
+    /// Format popover visibility (macOS only)
+    @State private var showingFormatPopover = false
+    #endif
+
     /// Text formatting state
     @State private var currentTextStyle: TextStyle = .body
 
@@ -311,8 +316,20 @@ struct ChapterEditorView: View {
             #else
             // macOS toolbar - comprehensive format tools + search + export + inspector
             ToolbarItemGroup(placement: .primaryAction) {
-                // Format menu (Aa button) - macOS dropdown menu
-                formatMenu()
+                // Format popover (Aa button) - matches Apple Notes design
+                Button {
+                    showingFormatPopover.toggle()
+                } label: {
+                    Label("Format", systemImage: "textformat")
+                }
+                .help("Text formatting")
+                .popover(isPresented: $showingFormatPopover, arrowEdge: .bottom) {
+                    FormatPopoverView(
+                        currentTextStyle: $currentTextStyle,
+                        activeFormats: activeFormats,
+                        onFormatAction: handleTextFormat
+                    )
+                }
 
                 // Core content tools
                 Button {
@@ -447,106 +464,6 @@ struct ChapterEditorView: View {
         #endif
     }
 
-    // MARK: - Format Menu
-
-    /// Build the format menu for macOS toolbar
-    @ViewBuilder
-    private func formatMenu() -> some View {
-        Menu {
-            // Text Styles submenu
-            Menu("Text Style") {
-                ForEach(TextStyle.allCases) { style in
-                    Button {
-                        currentTextStyle = style
-                        handleTextFormat(.style(style))
-                    } label: {
-                        HStack {
-                            Text(style.displayName)
-                            if currentTextStyle == style {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            }
-
-            Divider()
-
-            // Character Formatting
-            Button("Bold") {
-                handleTextFormat(.bold)
-            }
-            .keyboardShortcut("b", modifiers: .command)
-
-            Button("Italic") {
-                handleTextFormat(.italic)
-            }
-            .keyboardShortcut("i", modifiers: .command)
-
-            Button("Underline") {
-                handleTextFormat(.underline)
-            }
-            .keyboardShortcut("u", modifiers: .command)
-
-            Button("Strikethrough") {
-                handleTextFormat(.strikethrough)
-            }
-
-            Divider()
-
-            // Text Color submenu
-            Menu("Text Color") {
-                Button("Black") { handleTextFormat(.textColor(.black)) }
-                Button("Red") { handleTextFormat(.textColor(.red)) }
-                Button("Orange") { handleTextFormat(.textColor(.orange)) }
-                Button("Yellow") { handleTextFormat(.textColor(.yellow)) }
-                Button("Green") { handleTextFormat(.textColor(.green)) }
-                Button("Blue") { handleTextFormat(.textColor(.blue)) }
-                Button("Purple") { handleTextFormat(.textColor(.purple)) }
-            }
-
-            // Highlight submenu
-            Menu("Highlight") {
-                Button("Yellow") { handleTextFormat(.highlight(.yellow)) }
-                Button("Orange") { handleTextFormat(.highlight(.orange)) }
-                Button("Pink") { handleTextFormat(.highlight(.pink)) }
-                Button("Purple") { handleTextFormat(.highlight(.purple)) }
-                Button("Blue") { handleTextFormat(.highlight(.blue)) }
-                Button("Green") { handleTextFormat(.highlight(.green)) }
-                Divider()
-                Button("Remove Highlight") { handleTextFormat(.highlight(.clear)) }
-            }
-
-            Divider()
-
-            // Lists
-            Button("Bullet List") {
-                handleTextFormat(.bulletList)
-            }
-
-            Button("Numbered List") {
-                handleTextFormat(.numberedList)
-            }
-
-            Button("Checklist") {
-                handleTextFormat(.checklist)
-            }
-
-            Divider()
-
-            Button("Increase Indent") {
-                handleTextFormat(.indent)
-            }
-
-            Button("Decrease Indent") {
-                handleTextFormat(.outdent)
-            }
-        } label: {
-            Label("Format", systemImage: "textformat")
-        }
-        .help("Text formatting")
-    }
-
     // MARK: - Format Actions
 
     /// Handle formatting actions from the keyboard toolbar
@@ -587,10 +504,25 @@ struct ChapterEditorView: View {
 
             guard targetRange.location != NSNotFound && targetRange.length > 0 else { return }
 
-            // Check if already a quote block by looking for quote paragraph style
+            // Check if already a quote block by looking for the specific combination of attributes
+            // A quote block has: headIndent=20, background color, and possibly italic font
             let existingAttributes = mutableText.attributes(at: targetRange.location, effectiveRange: nil)
-            let isAlreadyQuoted = existingAttributes[.paragraphStyle] != nil &&
-                                 (existingAttributes[.paragraphStyle] as? NSParagraphStyle)?.headIndent ?? 0 > 0
+            let hasQuoteIndent = (existingAttributes[.paragraphStyle] as? NSParagraphStyle)?.headIndent == 20
+            let hasQuoteBackground: Bool
+            #if canImport(UIKit)
+            if let bgColor = existingAttributes[.backgroundColor] as? UIColor {
+                hasQuoteBackground = (bgColor != .clear && bgColor.cgColor.alpha > 0)
+            } else {
+                hasQuoteBackground = false
+            }
+            #else
+            if let bgColor = existingAttributes[.backgroundColor] as? NSColor {
+                hasQuoteBackground = (bgColor != .clear && bgColor.alphaComponent > 0)
+            } else {
+                hasQuoteBackground = false
+            }
+            #endif
+            let isAlreadyQuoted = hasQuoteIndent && hasQuoteBackground
 
             if isAlreadyQuoted {
                 // Remove quote block styling
@@ -1063,7 +995,6 @@ struct ChapterEditorView: View {
         // Create table as formatted text
         // Calculate column width (approximate - 15 characters per column)
         let columnWidth = 15
-        let cellPlaceholder = String(repeating: " ", count: columnWidth - 2)
 
         var tableText = "\n" // Start with newline
 
@@ -1120,61 +1051,53 @@ struct ChapterEditorView: View {
     ///   - text: The mutable attributed string to modify
     ///   - range: The range to apply quote styling to
     private func applyQuoteBlockStyling(to text: NSMutableAttributedString, range: NSRange) {
-        // Create paragraph style with indentation (simulates left border)
+        // REDESIGNED: Pure paragraph-style approach without visual markers
+        // The typingAttributes system now ensures these attributes persist when typing
+
+        // Create paragraph style with distinctive indentation
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.headIndent = 20 // Left indentation
         paragraphStyle.firstLineHeadIndent = 20
         paragraphStyle.tailIndent = -10 // Right margin
+        // Use tab stops to create visual separation
+        paragraphStyle.tabStops = [NSTextTab(textAlignment: .left, location: 20)]
 
         #if canImport(UIKit)
-        // Apply quote block attributes
+        // Get current font at range start to preserve size, then make italic
+        let currentFont: UIFont
+        if text.length > range.location {
+            currentFont = text.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont
+                ?? UIFont.systemFont(ofSize: 17, weight: .regular)
+        } else {
+            currentFont = UIFont.systemFont(ofSize: 17, weight: .regular)
+        }
+        let italicFont = currentFont.with(traits: .traitItalic)
+
+        // Apply quote block attributes to the entire range
+        // These will be preserved by typingAttributes when user types
         text.addAttributes([
             .paragraphStyle: paragraphStyle,
             .backgroundColor: UIColor.systemGray6, // Light background
             .foregroundColor: UIColor.secondaryLabel, // Slightly muted text
-            .font: UIFont.systemFont(ofSize: 17, weight: .regular).with(traits: .traitItalic)
+            .font: italicFont
         ], range: range)
-
-        // Add visual left border using a special marker at paragraph start
-        // Insert "┃ " at the beginning of each line in the range
-        let paragraphRanges = getParagraphRanges(in: text, for: range)
-        var offset = 0
-        for paragraphRange in paragraphRanges {
-            let adjustedLocation = paragraphRange.location + offset
-            let borderMarker = NSAttributedString(
-                string: "┃ ",
-                attributes: [
-                    .foregroundColor: UIColor.systemBlue,
-                    .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
-                ]
-            )
-            text.insert(borderMarker, at: adjustedLocation)
-            offset += 2 // Account for inserted characters
-        }
         #else
         // macOS version
+        let currentFont: NSFont
+        if text.length > range.location {
+            currentFont = text.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont
+                ?? NSFont.systemFont(ofSize: 17, weight: .regular)
+        } else {
+            currentFont = NSFont.systemFont(ofSize: 17, weight: .regular)
+        }
+        let italicFont = currentFont.with(traits: .italic)
+
         text.addAttributes([
             .paragraphStyle: paragraphStyle,
             .backgroundColor: NSColor.quaternaryLabelColor, // Light background
             .foregroundColor: NSColor.secondaryLabelColor, // Slightly muted text
-            .font: NSFont.systemFont(ofSize: 17, weight: .regular).with(traits: .italic)
+            .font: italicFont
         ], range: range)
-
-        // Add visual left border
-        let paragraphRanges = getParagraphRanges(in: text, for: range)
-        var offset = 0
-        for paragraphRange in paragraphRanges {
-            let adjustedLocation = paragraphRange.location + offset
-            let borderMarker = NSAttributedString(
-                string: "┃ ",
-                attributes: [
-                    .foregroundColor: NSColor.systemBlue,
-                    .font: NSFont.systemFont(ofSize: 17, weight: .semibold)
-                ]
-            )
-            text.insert(borderMarker, at: adjustedLocation)
-            offset += 2
-        }
         #endif
     }
 
@@ -1183,25 +1106,8 @@ struct ChapterEditorView: View {
     ///   - text: The mutable attributed string to modify
     ///   - range: The range to remove quote styling from
     private func removeQuoteBlockStyling(from text: NSMutableAttributedString, range: NSRange) {
-        // Remove border markers first
-        let paragraphRanges = getParagraphRanges(in: text, for: range)
-        var offset = 0
-
-        for paragraphRange in paragraphRanges.reversed() {
-            let adjustedRange = NSRange(
-                location: paragraphRange.location - offset,
-                length: paragraphRange.length
-            )
-
-            if adjustedRange.location < text.length {
-                let paragraphText = (text.string as NSString).substring(with: adjustedRange)
-                if paragraphText.hasPrefix("┃ ") {
-                    let markerRange = NSRange(location: adjustedRange.location, length: 2)
-                    text.deleteCharacters(in: markerRange)
-                    offset += 2
-                }
-            }
-        }
+        // REDESIGNED: Simple attribute reset without marker deletion
+        // No visual markers to remove anymore
 
         // Reset to default paragraph style and formatting
         let defaultParagraphStyle = NSMutableParagraphStyle()
@@ -1210,19 +1116,41 @@ struct ChapterEditorView: View {
         defaultParagraphStyle.tailIndent = 0
 
         #if canImport(UIKit)
+        // Get current font to preserve size
+        let currentFont: UIFont
+        if text.length > range.location {
+            currentFont = text.attribute(.font, at: range.location, effectiveRange: nil) as? UIFont
+                ?? UIFont.systemFont(ofSize: 17, weight: .regular)
+        } else {
+            currentFont = UIFont.systemFont(ofSize: 17, weight: .regular)
+        }
+        // Remove italic trait if present
+        let regularFont = currentFont.removingSymbolicTraits(.traitItalic) ?? currentFont
+
         text.addAttributes([
             .paragraphStyle: defaultParagraphStyle,
             .backgroundColor: UIColor.clear,
             .foregroundColor: UIColor.label,
-            .font: UIFont.systemFont(ofSize: 17, weight: .regular)
-        ], range: NSRange(location: range.location, length: text.length - range.location))
+            .font: regularFont
+        ], range: range)
         #else
+        // macOS version
+        let currentFont: NSFont
+        if text.length > range.location {
+            currentFont = text.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont
+                ?? NSFont.systemFont(ofSize: 17, weight: .regular)
+        } else {
+            currentFont = NSFont.systemFont(ofSize: 17, weight: .regular)
+        }
+        // Remove italic trait if present
+        let regularFont = NSFontManager.shared.convert(currentFont, toNotHaveTrait: .italicFontMask)
+
         text.addAttributes([
             .paragraphStyle: defaultParagraphStyle,
             .backgroundColor: NSColor.clear,
             .foregroundColor: NSColor.labelColor,
-            .font: NSFont.systemFont(ofSize: 17, weight: .regular)
-        ], range: NSRange(location: range.location, length: min(range.length, text.length - range.location)))
+            .font: regularFont
+        ], range: range)
         #endif
     }
 
