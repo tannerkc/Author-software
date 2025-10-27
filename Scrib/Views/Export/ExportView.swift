@@ -111,6 +111,7 @@ struct ExportView: View {
                         VStack(spacing: 20) {
                             ProgressView()
                                 .scaleEffect(1.5)
+                                .fixedSize()
                             Text("Exporting \(selectedFormat.rawValue)...")
                                 .font(.headline)
                         }

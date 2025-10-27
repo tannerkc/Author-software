@@ -459,7 +459,7 @@ struct ChapterEditorView: View {
             #endif
         }
         #if os(macOS)
-        .searchable(text: $searchText, placement: .toolbar, prompt: "Search in chapter")
+        .searchable(text: $searchText, placement: .toolbar, prompt: "Search")
         .inspector(isPresented: $isInspectorPresented) {
             // CRITICAL: Use safe relationship access to prevent EXC_BAD_ACCESS
             // chapter.book might be faulting on macOS when chapter is first selected
@@ -804,20 +804,31 @@ struct ChapterEditorView: View {
                 .font: titleFont,
                 .foregroundColor: PlatformColor.labelColor
             ]
-            attributedText = NSAttributedString(string: "", attributes: attributes)
+            // CRITICAL: Use zero-width space (U+200B) instead of empty string
+            // Empty attributed strings discard their attributes because there are no characters
+            // The zero-width space is invisible but preserves the title-style attributes
+            // so updateTypingAttributes() can access them
+            attributedText = NSAttributedString(string: "\u{200B}", attributes: attributes)
+
+            // CRITICAL: Set cursor position to start (before zero-width space)
+            // This prevents backspace from trying to delete it immediately
+            // ONLY for empty chapters - chapters with content use normal cursor positioning
+            textSelection = NSRange(location: 0, length: 0)
 
             // Set current text style to title for format menu display
             currentTextStyle = .title
 
-            print("📝 Initialized empty chapter with title-style formatting")
-        }
+            // Auto-focus for immediate typing (ONLY for empty chapters)
+            // CRITICAL: Increased delay ensures NSTextView is fully initialized and ready for focus
+            // Existing chapters with content should NOT auto-focus - user clicks to focus naturally
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(200))
+                // Check if task was cancelled (view disappeared before sleep completed)
+                guard !Task.isCancelled else { return }
+                isEditorFocused = true
+            }
 
-        // Auto-focus for immediate typing
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(100))
-            // Check if task was cancelled (view disappeared before sleep completed)
-            guard !Task.isCancelled else { return }
-            isEditorFocused = true
+            print("📝 Initialized empty chapter with title-style formatting (zero-width space at position 0)")
         }
 
         print("📖 Loaded chapter: \(chapter.extractedTitle)")

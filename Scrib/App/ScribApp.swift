@@ -101,6 +101,7 @@ struct ScribApp: App {
                         ProgressView()
                             .progressViewStyle(.circular)
                             .scaleEffect(1.2)
+                            .fixedSize()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     #if os(macOS)
@@ -112,6 +113,10 @@ struct ScribApp: App {
             }
         }
         #if os(macOS)
+        // MARK: - macOS Window Configuration
+        // Set larger default window size for comfortable writing workspace
+        .defaultSize(width: 1400, height: 900)
+
         // MARK: - macOS Toolbar Configuration (Apple Notes style)
         // Enables separate toolbars for each column in NavigationSplitView
         // The .unified style with showsTitle: false creates distinct toolbar areas

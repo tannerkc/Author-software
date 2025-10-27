@@ -71,6 +71,9 @@ struct ContentView: View {
     /// Track which book to delete (for confirmation)
     @State private var deletingBook: Book?
 
+    /// Track which chapter to delete (for confirmation)
+    @State private var deletingChapter: Chapter?
+
     /// Look up the currently selected book from its ID
     private var selectedBook: Book? {
         guard let id = selectedBookId else { return nil }
@@ -217,7 +220,7 @@ struct ContentView: View {
                     ZStack {
                         List(books, selection: $selectedBookId) { book in
                             HStack {
-                            Image(systemName: "book.fill")
+                                Image(systemName: "book.fill")
                                 .foregroundStyle(.blue)
                                 .font(.title3)
 
@@ -408,6 +411,7 @@ struct ContentView: View {
                             ProgressView()
                                 .progressViewStyle(.circular)
                                 .scaleEffect(1.2)
+                                .fixedSize()
                             Text("Loading books...")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -420,42 +424,45 @@ struct ContentView: View {
                         #endif
                     }
                 }
+                // CRITICAL: Force toolbar re-render when loading completes
+                .id(isLoadingBooks)
                 .navigationTitle("Books")
-                    .toolbar {
-                        #if os(macOS)
-                        Button {
-                            // CRITICAL: Defer all state changes to avoid "modifying state during view update"
-                            Task { @MainActor in
-                                try? await Task.sleep(for: .milliseconds(16))
-                                guard !Task.isCancelled else { return }
+                .toolbar {
+                    #if os(macOS)
+                    Button {
+                        // CRITICAL: Defer all state changes to avoid "modifying state during view update"
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(16))
+                            guard !Task.isCancelled else { return }
 
-                                // Create new book with default title
-                                let newBook = Book(
-                                    title: "Untitled Book",
-                                    genre: "General"
-                                )
+                            // Create new book with default title
+                            let newBook = Book(
+                                title: "Untitled Book",
+                                genre: "General"
+                            )
 
-                                // Insert into model context
-                                modelContext.insert(newBook)
+                            // Insert into model context
+                            modelContext.insert(newBook)
 
-                                // Select the new book (shows in sidebar)
-                                selectedBookId = newBook.id
+                            // Select the new book (shows in sidebar)
+                            selectedBookId = newBook.id
 
-                                // Enable edit mode for the new book
-                                editingBookId = newBook.id
+                            // Enable edit mode for the new book
+                            editingBookId = newBook.id
 
-                                // Auto-focus the title field after view updates
-                                try? await Task.sleep(for: .milliseconds(100))
-                                guard !Task.isCancelled else { return }
-                                isBookTitleFocused = true
-                            }
-                        } label: {
-                            Label("New Book", systemImage: "book.badge.plus")
+                            // Auto-focus the title field after view updates
+                            try? await Task.sleep(for: .milliseconds(100))
+                            guard !Task.isCancelled else { return }
+                            isBookTitleFocused = true
                         }
-                        #else
-                        Button("New Book") { }
-                        #endif
+                    } label: {
+                        Label("New Book", systemImage: "book.badge.plus")
                     }
+                    #else
+                    Button("New Book") { }
+                    #endif
+                }
+                .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 350)
 
                 } content: {
                     // CONTENT: Chapters - Standard List selection pattern (Apple HIG)
@@ -465,7 +472,9 @@ struct ContentView: View {
                             // This follows 2025 NavigationSplitView best practices
                             List(filteredChapters, selection: $selectedChapterId) { chapter in
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(chapter.title.isEmpty ? "Untitled" : chapter.title)
+                                    // APPLE NOTES BEHAVIOR: Display first line as chapter title
+                                    // extractedTitle automatically extracts the first line from content
+                                    Text(chapter.extractedTitle)
                                         .font(.headline)
 
                                     let preview = previewText(for: chapter)
@@ -478,6 +487,19 @@ struct ContentView: View {
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .tag(chapter.id)
+                                .contextMenu {
+                                    // Delete chapter
+                                    Button(role: .destructive) {
+                                        // CRITICAL: Defer state changes to avoid "modifying state during view update"
+                                        Task { @MainActor in
+                                            try? await Task.sleep(for: .milliseconds(16))
+                                            guard !Task.isCancelled else { return }
+                                            deletingChapter = chapter
+                                        }
+                                    } label: {
+                                        Label("Delete Chapter", systemImage: "trash")
+                                    }
+                                }
                             }
                             // CRITICAL: Show loading overlay when chapters are being loaded
                             // This provides visual feedback and prevents user confusion
@@ -487,10 +509,13 @@ struct ContentView: View {
                                 ProgressView()
                                     .progressViewStyle(.circular)
                                     .scaleEffect(1.2)
+                                    .fixedSize()
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     .background(Color(nsColor: .windowBackgroundColor).opacity(0.8))
                             }
                         }
+                        // CRITICAL: Force toolbar re-render when loading completes
+                        .id(isLoadingChapters)
                         .navigationTitle(selectedBook?.title ?? "Chapters")
                         .toolbar {
                             #if os(macOS)
@@ -694,6 +719,60 @@ struct ContentView: View {
         } message: {
             if let book = deletingBook {
                 Text("Are you sure you want to delete \"\(book.title)\" and all \(book.chapterCount) chapters? This action cannot be undone.")
+            }
+        }
+        .alert("Delete Chapter?", isPresented: Binding(
+            get: { deletingChapter != nil },
+            set: { if !$0 { deletingChapter = nil } }
+        )) {
+            Button("Cancel", role: .cancel) {
+                deletingChapter = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let chapter = deletingChapter {
+                    // CRITICAL: Defer all state changes
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(16))
+                        guard !Task.isCancelled else { return }
+
+                        // Get the parent book to update its chapter list
+                        guard let book = selectedBook else {
+                            deletingChapter = nil
+                            return
+                        }
+
+                        // Remove from book's chapters array
+                        book.chapters.removeAll { $0.id == chapter.id }
+
+                        // Delete the chapter from model context
+                        modelContext.delete(chapter)
+
+                        // Update book's last modified timestamp
+                        book.lastModified = Date()
+
+                        // Clear the deleting reference
+                        deletingChapter = nil
+
+                        // Clear selection if this was the selected chapter
+                        if selectedChapterId == chapter.id {
+                            selectedChapterId = nil
+                        }
+
+                        // Update cached chapters array asynchronously
+                        isLoadingChapters = true
+                        try? await Task.sleep(for: .milliseconds(50))
+                        guard !Task.isCancelled else {
+                            isLoadingChapters = false
+                            return
+                        }
+                        chaptersToShow = book.chapters.sorted { $0.order < $1.order }
+                        isLoadingChapters = false
+                    }
+                }
+            }
+        } message: {
+            if let chapter = deletingChapter {
+                Text("Are you sure you want to delete \"\(chapter.extractedTitle)\"? This action cannot be undone.")
             }
         }
     }

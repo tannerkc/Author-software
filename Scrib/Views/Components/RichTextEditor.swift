@@ -720,9 +720,17 @@ struct RichTextEditor: NSViewRepresentable {
                     // Track what we set to prevent re-setting the same content
                     context.coordinator.lastSetAttributedString = attributedText
 
-                    // Restore selection WITHOUT triggering auto-scroll
-                    if oldSelectedRange.location != NSNotFound &&
-                       oldSelectedRange.location <= textStorage.length {
+                    // CRITICAL: Check for zero-width space BEFORE restoring old selection
+                    // This ensures empty chapters always get cursor at position 0
+                    if textStorage.string == "\u{200B}" {
+                        // SPECIAL CASE: Zero-width space only (empty chapter)
+                        // Position cursor at START (position 0, before the zero-width space)
+                        // This prevents backspace from deleting it on first keypress
+                        textView.setSelectedRange(NSRange(location: 0, length: 0))
+                        print("📍 Positioned cursor at start of empty chapter (before zero-width space)")
+                    } else if oldSelectedRange.location != NSNotFound &&
+                              oldSelectedRange.location <= textStorage.length {
+                        // Restore selection for normal content
                         textView.setSelectedRange(oldSelectedRange)
                     }
 
@@ -744,6 +752,10 @@ struct RichTextEditor: NSViewRepresentable {
         }
 
         textView.isEditable = isEditable
+
+        // REMOVED: Focus handling that was causing unfocus bugs
+        // NSTextView naturally handles focus when user clicks
+        // Auto-focus for empty chapters is handled via isEditorFocused binding in loadChapterContent
     }
 
     func makeCoordinator() -> Coordinator {
@@ -830,8 +842,23 @@ struct RichTextEditor: NSViewRepresentable {
                 return
             }
 
-            // Handle empty text storage
-            guard textStorage.length > 0 else {
+            // Handle empty or single-character text storage
+            // CRITICAL: Single character might be zero-width space with title-style attributes
+            guard textStorage.length > 1 else {
+                // Check if we have exactly one character (zero-width space) with title-style formatting
+                if textStorage.length == 1 {
+                    let attrs = textStorage.attributes(at: 0, effectiveRange: nil)
+                    if let font = attrs[.font] as? NSFont {
+                        // Check if this is title/heading style (larger than body 17pt)
+                        if font.pointSize > 17 {
+                            // Preserve the title/heading style attributes for typing
+                            textView.typingAttributes = attrs
+                            print("📝 Preserved typing attributes from zero-width space: \(font.pointSize)pt")
+                            return
+                        }
+                    }
+                }
+                // Empty or no meaningful attributes - use defaults
                 textView.typingAttributes = defaultTypingAttributes()
                 return
             }
@@ -923,14 +950,97 @@ struct RichTextEditor: NSViewRepresentable {
                 return true
             }
 
-            // Get replacement text - allow deletions
+            // Get text storage first to check for special cases
+            guard let textStorage = textView.textStorage else {
+                return true
+            }
+
+            // PREVENT DELETION OF ZERO-WIDTH SPACE: When it's the only character (empty chapter)
+            // This preserves title formatting for empty chapters
+            if replacementString?.isEmpty == true {  // This is a deletion (backspace/delete)
+                // Check if we're trying to delete the zero-width space when it's alone
+                if textStorage.string == "\u{200B}" {
+                    // Prevent deletion - keep the zero-width space to preserve formatting
+                    print("🚫 Prevented deletion of zero-width space (preserves title formatting)")
+                    return false
+                }
+            }
+
+            // Get replacement text - allow other deletions
             guard let text = replacementString, !text.isEmpty else {
                 return true
             }
 
-            // Get text storage
-            guard let textStorage = textView.textStorage else {
-                return true
+            // AUTO-REMOVE ZERO-WIDTH SPACE: When user starts typing in a new empty chapter
+            // Remove the invisible zero-width space placeholder that carries the title formatting
+            if textStorage.string == "\u{200B}" && !text.isEmpty {
+                print("🔄 Removing zero-width space, user is typing: \"\(text)\"")
+
+                // Preserve the title-style attributes from the zero-width space
+                let preservedAttrs = textStorage.attributes(at: 0, effectiveRange: nil)
+
+                // Set flag to prevent circular updates
+                isUpdatingFromUser = true
+                defer { isUpdatingFromUser = false }
+
+                // Disable animations during replacement
+                NSAnimationContext.beginGrouping()
+                NSAnimationContext.current.duration = 0
+
+                // Begin editing batch
+                textStorage.beginEditing()
+
+                // Delete the zero-width space
+                textStorage.deleteCharacters(in: NSRange(location: 0, length: 1))
+
+                // Create attributed replacement with preserved title-style formatting
+                let attributedReplacement = NSAttributedString(string: text, attributes: preservedAttrs)
+
+                // Insert at position 0 (where zero-width space was)
+                textStorage.insert(attributedReplacement, at: 0)
+
+                textStorage.endEditing()
+                NSAnimationContext.endGrouping()
+
+                // Update cursor to end of inserted text
+                let newPosition = text.count
+                textView.setSelectedRange(NSRange(location: newPosition, length: 0))
+
+                // Update typing attributes for next character
+                textView.typingAttributes = preservedAttrs
+
+                print("✅ Replaced zero-width space with: \"\(text)\" at position 0")
+
+                // CRITICAL: Return false to prevent default behavior
+                // After deleting the zero-width space, the original affectedCharRange is invalid (out of bounds)
+                // We've already handled the insertion manually above
+                return false
+            }
+
+            // APPLE NOTES BEHAVIOR: Detect Enter key and auto-revert non-body styles to body
+            // When user presses Enter while in title/heading/subheading style, the next line
+            // should automatically revert to body style (17pt regular)
+            if text == "\n" {
+                let currentAttrs = textView.typingAttributes
+                if let currentFont = currentAttrs[.font] as? NSFont {
+                    let currentSize = currentFont.pointSize
+                    // Title = 28pt, Heading = 22pt, Subheading = 18pt, Body = 17pt
+                    // If current style is larger than body, schedule revert to body after Enter
+                    if currentSize > 17 {
+                        // Allow the newline to be inserted with current attributes
+                        // Then asynchronously revert typingAttributes to body style
+                        // This must happen AFTER the newline insertion completes
+                        Task { @MainActor in
+                            // Small delay ensures the newline insertion has completed
+                            try? await Task.sleep(for: .milliseconds(10))
+                            guard !Task.isCancelled else { return }
+
+                            // Revert to body style for the next line
+                            textView.typingAttributes = self.defaultTypingAttributes()
+                            print("⏎ Enter pressed in \(currentSize)pt style → reverted to body style")
+                        }
+                    }
+                }
             }
 
             // CRITICAL: Use typingAttributes as single source of truth
