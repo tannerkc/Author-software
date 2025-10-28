@@ -13,17 +13,16 @@ import SwiftData
 import UIKit
 fileprivate typealias PlatformFont = UIFont
 fileprivate typealias PlatformColor = UIColor
+
+fileprivate extension UIColor {
+    static var labelColor: UIColor { .label }
+    static var secondaryLabelColor: UIColor { .secondaryLabel }
+    static var tertiaryLabelColor: UIColor { .tertiaryLabel }
+}
 #elseif canImport(AppKit)
 import AppKit
 fileprivate typealias PlatformFont = NSFont
 fileprivate typealias PlatformColor = NSColor
-
-// macOS color extension to match UIColor.label
-extension NSColor {
-    fileprivate static var label: NSColor {
-        return .labelColor
-    }
-}
 #endif
 
 /// Detail pane view for editing chapter content
@@ -712,7 +711,7 @@ struct ChapterEditorView: View {
 
                 // Insert new marker with proper attributes
                 let markerAttributes: [NSAttributedString.Key: Any] = [
-                    .foregroundColor: PlatformColor.label, // Adapts to light/dark mode
+                    .foregroundColor: PlatformColor.labelColor, // Adapts to light/dark mode
                     .font: PlatformFont.systemFont(ofSize: 17)
                 ]
                 let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
@@ -723,7 +722,7 @@ struct ChapterEditorView: View {
             } else {
                 // No existing marker: Insert new marker with proper attributes
                 let markerAttributes: [NSAttributedString.Key: Any] = [
-                    .foregroundColor: PlatformColor.label, // Adapts to light/dark mode
+                    .foregroundColor: PlatformColor.labelColor, // Adapts to light/dark mode
                     .font: PlatformFont.systemFont(ofSize: 17)
                 ]
                 let attributedMarker = NSAttributedString(string: newMarker, attributes: markerAttributes)
@@ -847,9 +846,9 @@ struct ChapterEditorView: View {
         // Create new save task with delay
         saveTask = Task { @MainActor in
             do {
-                // INCREASED DELAY: Wait for 750ms of inactivity before saving
-                // This reduces rapid-fire saves during fast typing
-                try await Task.sleep(for: .milliseconds(750))
+                // BALANCED DELAY: Wait for 150ms of inactivity before saving
+                // Optimized for real-time list updates while reducing rapid-fire saves during fast typing
+                try await Task.sleep(for: .milliseconds(150))
 
                 // Check if task was cancelled during sleep
                 guard !Task.isCancelled else { return }

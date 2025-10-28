@@ -13,6 +13,12 @@ import SwiftData
 import UIKit
 fileprivate typealias PlatformFont = UIFont
 fileprivate typealias PlatformColor = UIColor
+
+fileprivate extension UIColor {
+    static var labelColor: UIColor { .label }
+    static var secondaryLabelColor: UIColor { .secondaryLabel }
+    static var tertiaryLabelColor: UIColor { .tertiaryLabel }
+}
 #elseif canImport(AppKit)
 import AppKit
 fileprivate typealias PlatformFont = NSFont
@@ -49,6 +55,10 @@ final class Chapter {
     /// Preserves text styling (Title, Heading, Body) and character formatting (bold, italic, etc.)
     var formattedContent: Data?
 
+    /// Cached word count for performance and SwiftData observation
+    /// Updated automatically when content changes via setAttributedContent() or updateContent()
+    var wordCount: Int = 0
+
     /// Reference to the parent book
     var book: Book?
 
@@ -78,14 +88,15 @@ final class Chapter {
         self.order = order
         self.dateCreated = dateCreated
         self.lastModified = lastModified
+        self.wordCount = Self.calculateWordCount(for: content)
     }
 
-    /// Calculate the word count of the chapter content
+    /// Calculate the word count for a given string
     ///
     /// Words are defined as sequences separated by whitespace or newlines.
     /// This provides a real-time word count for the toolbar display.
-    var wordCount: Int {
-        let words = content.split { $0.isWhitespace || $0.isNewline }
+    private static func calculateWordCount(for text: String) -> Int {
+        let words = text.split { $0.isWhitespace || $0.isNewline }
         return words.count
     }
 
@@ -116,20 +127,39 @@ final class Chapter {
 
     /// Get the body content (everything after the first line)
     ///
-    /// Returns content excluding the title line for display purposes.
+    /// Returns content excluding the title line (first line).
+    /// The title is always the first line, so this returns everything after the first newline.
+    /// Leading/trailing whitespace is trimmed from the result.
+    ///
+    /// This ensures the extracted title from the first line is NEVER included in the body preview.
     var bodyContent: String {
-        let lines = content.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
-        if lines.count > 1 {
-            return String(lines[1])
+        // Find the first newline character
+        guard let firstNewlineIndex = content.firstIndex(of: "\n") else {
+            // No newline found = no body content, only title
+            return ""
         }
-        return ""
+
+        // Get everything after the first newline (skip the newline character itself)
+        let startIndex = content.index(after: firstNewlineIndex)
+
+        // Make sure we haven't gone past the end of the string
+        guard startIndex < content.endIndex else {
+            return ""
+        }
+
+        // Extract substring from after first newline to end
+        let bodyText = String(content[startIndex...])
+
+        // Trim leading/trailing whitespace and newlines
+        return bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Returns a preview of the chapter content (first 100 characters of body, excluding title)
     ///
     /// Used in the chapter list view to show a snippet of the content.
+    /// This preview NEVER includes the extracted title - it only shows body content.
     var contentPreview: String {
-        let body = bodyContent
+        let body = bodyContent  // bodyContent already excludes the first line (title)
         if body.isEmpty {
             return ""
         }
@@ -139,7 +169,10 @@ final class Chapter {
 
     /// Returns a contextual preview showing where search text appears in the content
     /// - Parameter searchText: The text to search for
-    /// - Returns: A string containing context around the first match, or regular contentPreview if no match
+    /// - Returns: A string containing context around the first match in body content only (never includes title)
+    ///
+    /// This preview NEVER includes the extracted title, even when the search term matches the title.
+    /// It only searches and shows matches within the body content.
     func contextualPreview(for searchText: String) -> String {
         guard !searchText.isEmpty else {
             return contentPreview
@@ -147,46 +180,39 @@ final class Chapter {
 
         let searchQuery = searchText.lowercased()
 
-        // First check if search text is in the title property
-        // This matches the filtering logic which checks both title and content
-        if title.lowercased().contains(searchQuery) {
-            // If match is in title, show the title plus some content
-            let titleText = title
-            let bodyPreview = bodyContent.prefix(50).replacingOccurrences(of: "\n", with: " ")
-            if !bodyPreview.isEmpty {
-                return "\(titleText) - \(bodyPreview)..."
-            } else {
-                return titleText
-            }
+        // Search only in body content (never include title in preview)
+        let body = bodyContent
+        guard !body.isEmpty else {
+            return ""
         }
 
-        // If not in title, search in content
-        let searchContent = content.lowercased()
-        guard let range = searchContent.range(of: searchQuery) else {
+        let searchBody = body.lowercased()
+        guard let range = searchBody.range(of: searchQuery) else {
+            // No match in body content, return regular preview
             return contentPreview
         }
 
         // Convert String.Index to Int for easier calculation
-        let matchStartIndex = searchContent.distance(from: searchContent.startIndex, to: range.lowerBound)
+        let matchStartIndex = searchBody.distance(from: searchBody.startIndex, to: range.lowerBound)
 
         // Define context window: 50 chars before and after match
         let contextBefore = 50
         let contextAfter = 50
 
         let startIndex = max(0, matchStartIndex - contextBefore)
-        let endIndex = min(content.count, matchStartIndex + searchText.count + contextAfter)
+        let endIndex = min(body.count, matchStartIndex + searchText.count + contextAfter)
 
-        // Extract the contextual substring
-        let startStringIndex = content.index(content.startIndex, offsetBy: startIndex)
-        let endStringIndex = content.index(content.startIndex, offsetBy: endIndex)
+        // Extract the contextual substring from body content
+        let startStringIndex = body.index(body.startIndex, offsetBy: startIndex)
+        let endStringIndex = body.index(body.startIndex, offsetBy: endIndex)
 
-        var preview = String(content[startStringIndex..<endStringIndex])
+        var preview = String(body[startStringIndex..<endStringIndex])
 
-        // Add ellipsis if we're not at the start/end of content
+        // Add ellipsis if we're not at the start/end of body content
         if startIndex > 0 {
             preview = "..." + preview
         }
-        if endIndex < content.count {
+        if endIndex < body.count {
             preview = preview + "..."
         }
 
@@ -287,6 +313,7 @@ extension Chapter {
     /// - Parameter newContent: The new content to set
     func updateContent(_ newContent: String) {
         content = newContent
+        wordCount = Self.calculateWordCount(for: newContent)
         lastModified = Date()
     }
 
@@ -374,9 +401,10 @@ extension Chapter {
         // STEP 1: Save plain text FIRST (critical - never fails)
         // This ensures content is always preserved even if RTF conversion fails
         content = attributedString.string
+        wordCount = Self.calculateWordCount(for: content)
         lastModified = Date()
 
-        print("💾 Saving content: \(content.count) characters")
+        print("💾 Saving content: \(content.count) characters, \(wordCount) words")
 
         // STEP 2: Attempt RTF conversion for formatting preservation
         // If this fails, we've already saved the plain text above

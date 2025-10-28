@@ -79,4 +79,59 @@ extension Date {
             return formatter.string(from: self)
         }
     }
+
+    /// Apple Notes-style relative formatting for chapter list metadata
+    /// Returns: "Now" | "2 min ago" | "2 hours ago" | "Yesterday" | "Oct 28"
+    var appleNotesStyleFormatted: String {
+        let now = Date()
+        let interval = now.timeIntervalSince(self)
+
+        // Within 5 seconds: "Now"
+        if interval < 5 {
+            return "Now"
+        }
+
+        // Within minute: show seconds
+        if interval < 60 {
+            let seconds = Int(interval)
+            return seconds == 1 ? "1 second ago" : "\(seconds) seconds ago"
+        }
+
+        // Within hour: show minutes
+        if interval < 3600 {
+            let minutes = Int(interval / 60)
+            return minutes == 1 ? "1 min ago" : "\(minutes) min ago"
+        }
+
+        // Within today: show hours
+        if Calendar.current.isDateInToday(self) {
+            let hours = Int(interval / 3600)
+            return hours == 1 ? "1 hour ago" : "\(hours) hours ago"
+        }
+
+        // Yesterday
+        if Calendar.current.isDateInYesterday(self) {
+            return "Yesterday"
+        }
+
+        // Within the past week: show day name
+        if interval < 604800 {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEEE" // Full day name
+            return formatter.string(from: self)
+        }
+
+        // Within current year: "Oct 28"
+        let calendar = Calendar.current
+        if calendar.component(.year, from: self) == calendar.component(.year, from: now) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: self)
+        }
+
+        // Older: "Oct 28, 2024"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: self)
+    }
 }

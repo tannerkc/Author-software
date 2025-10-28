@@ -8,11 +8,15 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Middle column view displaying chapters for the selected book
 ///
 /// ChapterListView shows all chapters belonging to a book, with support
 /// for drag-and-drop reordering, creation, deletion, and selection.
+///
+/// Real-time updates: Uses @Query to observe SwiftData changes directly,
+/// ensuring the list updates as you type in the editor.
 struct ChapterListView: View {
     /// SwiftData model context
     @Environment(\.modelContext) private var modelContext
@@ -25,6 +29,9 @@ struct ChapterListView: View {
 
     /// Currently selected chapter ID (UUID-based for stable macOS selection)
     @Binding var selection: UUID?
+
+    /// All chapters in the database - SwiftData will notify this view when any chapter changes
+    @Query(sort: \Chapter.order) private var allChapters: [Chapter]
 
     /// View model for chapter operations
     @State private var viewModel: ChapterViewModel?
@@ -56,6 +63,9 @@ struct ChapterListView: View {
     /// Task for animating banner (can be cancelled to prevent memory issues)
     @State private var bannerAnimationTask: Task<Void, Never>?
 
+    /// Refresh trigger for forcing list updates (workaround for SwiftData @Query not observing property changes)
+    @State private var refreshTrigger = 0
+
     // MARK: - Metadata Filters
 
     /// Filter by POV character
@@ -86,7 +96,13 @@ struct ChapterListView: View {
         #if os(iOS)
         .scrollContentBackground(.hidden) // iOS 26: Enable Liquid Glass transparency
         #endif
+        .id(refreshTrigger)  // Force List rebuild when refreshTrigger changes
         .searchable(text: $searchText, prompt: "Search Chapters")
+        .onReceive(Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()) { _ in
+            // Workaround: SwiftData @Query doesn't observe property changes on existing objects
+            // Force refresh every 200ms to pick up content/wordCount/lastModified changes
+            refreshTrigger += 1
+        }
         .navigationTitle(book.title)
         .toolbar {
             #if os(iOS)
@@ -276,8 +292,10 @@ struct ChapterListView: View {
     // MARK: - Computed Properties
 
     /// Sorted and filtered chapters (applies both search and metadata filters)
+    /// Real-time updates: Filters from @Query allChapters, which observes SwiftData changes
     private var filteredChapters: [Chapter] {
-        var chapters = book.sortedChapters
+        // Start with chapters belonging to this book only
+        var chapters = allChapters.filter { $0.book?.id == book.id }
 
         // Apply search filter
         if !searchText.isEmpty {
@@ -462,8 +480,8 @@ struct ChapterListView: View {
         // macOS NavigationSplitView uses plain rows with .tag(), NOT NavigationLink
         // NavigationLink is for iOS navigation stacks
         ChapterRowView(chapter: chapter, searchText: searchText.isEmpty ? nil : searchText)
+            .id("\(chapter.id)-\(chapter.lastModified.timeIntervalSince1970)")  // Force rebuild when data changes
             .tag(chapter.id)  // Selection binding pattern for macOS
-            .id(chapter.id)
             .transition(.opacity.combined(with: .scale(scale: 0.95)))
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
@@ -501,8 +519,9 @@ struct ChapterListView: View {
 // MARK: - Chapter Row View
 
 /// Individual row view for a chapter in the list
+/// Optimized for real-time updates - only this row rebuilds when chapter data changes
 struct ChapterRowView: View {
-    let chapter: Chapter
+    @Bindable var chapter: Chapter
     var searchText: String? = nil
 
     /// Get the appropriate preview text based on whether search is active
@@ -551,10 +570,21 @@ struct ChapterRowView: View {
                     .font(.title3)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(chapter.extractedTitle)
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
+                    // Title row with timestamp (Apple Notes style)
+                    HStack {
+                        Text(chapter.extractedTitle)
+                            .font(.body)
+                            .fontWeight(.medium)
+                            .lineLimit(1)
+                            .layoutPriority(1)
+
+                        Spacer(minLength: 8)
+
+                        Text(chapter.lastModified.appleNotesStyleFormatted)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .fixedSize()
+                    }
 
                     if !previewText.isEmpty {
                         Text(highlightedPreview())
@@ -572,20 +602,6 @@ struct ChapterRowView: View {
                     if let metadata = chapter.metadata {
                         metadataBadges(for: metadata)
                     }
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    if chapter.wordCount > 0 {
-                        Text("\(chapter.wordCount) words")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Text(chapter.lastModified.simpleFormatted)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
                 }
             }
         }

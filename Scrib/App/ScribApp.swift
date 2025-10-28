@@ -21,6 +21,9 @@ struct ScribApp: App {
     /// Track whether this is the first launch
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
 
+    /// Track whether word count migration has been performed
+    @AppStorage("hasPerformedWordCountMigration") private var hasPerformedWordCountMigration: Bool = false
+
     /// Show splash screen on startup for professional loading experience
     @State private var showingSplashScreen = true
 
@@ -85,6 +88,14 @@ struct ScribApp: App {
                             hasLaunchedBefore = true
                             print("✅ Sample data created after UI ready")
                         }
+
+                        // MIGRATION: Recalculate word counts for existing chapters
+                        if !hasPerformedWordCountMigration {
+                            try? await Task.sleep(for: .milliseconds(100))
+                            guard !Task.isCancelled else { return }
+                            await performWordCountMigration()
+                            hasPerformedWordCountMigration = true
+                        }
                     }
 
                 // PERFORMANCE: Instant splash screen
@@ -130,5 +141,36 @@ struct ScribApp: App {
             SettingsView()
         }
         #endif
+    }
+
+    // MARK: - Migration Functions
+
+    /// Recalculate word counts for all existing chapters
+    /// This is a one-time migration when wordCount was converted from computed to stored property
+    @MainActor
+    private func performWordCountMigration() async {
+        print("🔄 Starting word count migration...")
+
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<Chapter>()
+
+        do {
+            let chapters = try context.fetch(descriptor)
+            print("📊 Migrating \(chapters.count) chapters...")
+
+            var updatedCount = 0
+            for chapter in chapters {
+                let calculatedWordCount = chapter.content.split { $0.isWhitespace || $0.isNewline }.count
+                if chapter.wordCount != calculatedWordCount {
+                    chapter.wordCount = calculatedWordCount
+                    updatedCount += 1
+                }
+            }
+
+            try context.save()
+            print("✅ Word count migration complete: Updated \(updatedCount) chapters")
+        } catch {
+            print("❌ Word count migration failed: \(error.localizedDescription)")
+        }
     }
 }

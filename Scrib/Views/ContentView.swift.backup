@@ -103,8 +103,9 @@ struct ContentView: View {
     /// Get preview text for a chapter, with contextual search preview when searching
     private func previewText(for chapter: Chapter) -> String {
         if chapterSearchText.isEmpty {
-            // No search: show preview of body content (excludes title line)
-            return chapter.contentPreview
+            // No search: show first 100 chars of content
+            let preview = chapter.content.prefix(100)
+            return String(preview)
         } else {
             // Search active: use contextual preview
             return chapter.contextualPreview(for: chapterSearchText)
@@ -252,28 +253,32 @@ struct ContentView: View {
 
             print("⚡ Loaded \(chaptersToShow.count) chapters INSTANTLY")
         }
-        .task(priority: .userInitiated) {
-            // PERFORMANCE: INSTANT book loading with highest priority (Apple Notes-level)
-            // No artificial delays - fetch immediately for instant interaction
+        .task {
+            // CRITICAL: Load books asynchronously on view appearance
+            // This prevents blocking the main thread during startup
+            isLoadingBooks = true
+
+            // Artificial delay to simulate database fetch (can be removed in production)
+            try? await Task.sleep(for: .milliseconds(50))
+
+            guard !Task.isCancelled else {
+                isLoadingBooks = false
+                return
+            }
+
+            // Fetch all books from SwiftData
             let descriptor = FetchDescriptor<Book>(
                 sortBy: [SortDescriptor(\.lastModified, order: .reverse)]
             )
 
             do {
                 books = try modelContext.fetch(descriptor)
-                print("✅ Loaded \(books.count) books INSTANTLY")
-
-                // Auto-select first book for immediate interaction
-                if let firstBook = books.first {
-                    selectedBookId = firstBook.id
-                    print("✅ Auto-selected first book: \(firstBook.title)")
-                }
+                isLoadingBooks = false
+                print("✅ Loaded \(books.count) books")
             } catch {
                 print("❌ Failed to load books: \(error)")
-                books = []
+                isLoadingBooks = false
             }
-
-            isLoadingBooks = false
         }
         .sheet(isPresented: $showingExportSheet) {
             if let book = exportingBook {
@@ -665,7 +670,7 @@ struct ContentView: View {
                                     .scaleEffect(1.2)
                                     .fixedSize()
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(Color(white: 0.95).opacity(0.8))
+                                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.8))
                             }
                         }
                         // CRITICAL: Force toolbar re-render when loading completes
@@ -771,6 +776,166 @@ struct ContentView: View {
                         }
                         #endif
                     }
+                }
+    }
+        .onChange(of: selectedBookId) { oldValue, newValue in
+            // PERFORMANCE: Instant chapter loading (ZERO delay)
+            guard oldValue != newValue else { return }
+
+            guard let id = newValue, let book = books.first(where: { $0.id == id }) else {
+                chaptersToShow = []
+                isLoadingChapters = false
+                return
+            }
+
+            // Load chapters IMMEDIATELY
+            isLoadingChapters = true
+            chaptersToShow = book.chapters.sorted { $0.order < $1.order }
+            isLoadingChapters = false
+
+            print("⚡ Loaded \(chaptersToShow.count) chapters INSTANTLY")
+        }
+        .task(priority: .userInitiated) {
+            // PERFORMANCE: Async book loading with ZERO delay for maximum speed
+            print("🚀 Starting INSTANT book load...")
+
+            // Fetch books IMMEDIATELY (no artificial delay)
+            do {
+                let descriptor = FetchDescriptor<Book>(
+                    sortBy: [SortDescriptor(\.lastModified, order: .reverse)]
+                )
+                books = try modelContext.fetch(descriptor)
+                print("📚 Loaded \(books.count) books instantly")
+
+                // CRITICAL: Auto-select first book for immediate interaction
+                if let firstBook = books.first {
+                    selectedBookId = firstBook.id
+                    print("✅ Auto-selected first book: \(firstBook.title)")
+                }
+            } catch {
+                print("❌ Failed to fetch books: \(error)")
+                books = []
+            }
+
+            isLoadingBooks = false
+        }
+        .onChange(of: isZenModeEnabled) { oldValue, newValue in
+            // CRITICAL FIX: Add transition delay to ensure forceSave completes
+            // Without this, the old view's onDisappear save and new view's load race
+            // The new view can load stale content before the save finishes
+            print("🔄 Zen mode transition: \(oldValue) → \(newValue)")
+
+            // Set transition flag to prevent conflicting updates
+            isTransitioningZenMode = true
+
+            // Add delay to ensure any in-flight saves complete
+            // ChapterEditorView.onDisappear calls forceSave which is synchronous
+            // But SwiftUI view updates can happen very quickly
+            Task { @MainActor in
+                // Wait for save operations to complete
+                try? await Task.sleep(for: .milliseconds(150))
+
+                guard !Task.isCancelled else { return }
+
+                // Clear transition flag
+                isTransitioningZenMode = false
+
+                print("✅ Zen mode transition complete")
+            }
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            // Export sheet for book
+            if let book = exportingBook {
+                ExportView(book: book, chapter: nil)
+            }
+        }
+        .alert("Delete Book?", isPresented: Binding(
+            get: { deletingBook != nil },
+            set: { if !$0 { deletingBook = nil } }
+        )) {
+            Button("Cancel", role: .cancel) {
+                deletingBook = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let book = deletingBook {
+                    // CRITICAL: Defer all state changes
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(16))
+                        guard !Task.isCancelled else { return }
+
+                        // Delete the book from model context
+                        modelContext.delete(book)
+                        deletingBook = nil
+
+                        // Clear selection if this was the selected book
+                        if selectedBookId == book.id {
+                            selectedBookId = nil
+                            selectedChapterId = nil
+                            chaptersToShow = []
+                        }
+                    }
+                }
+            }
+        } message: {
+            if let book = deletingBook {
+                Text("Are you sure you want to delete \"\(book.title)\" and all \(book.chapterCount) chapters? This action cannot be undone.")
+            }
+        }
+        .alert("Delete Chapter?", isPresented: Binding(
+            get: { deletingChapter != nil },
+            set: { if !$0 { deletingChapter = nil } }
+        )) {
+            Button("Cancel", role: .cancel) {
+                deletingChapter = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let chapter = deletingChapter {
+                    // CRITICAL: Defer all state changes
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(16))
+                        guard !Task.isCancelled else { return }
+
+                        // Get the parent book to update its chapter list
+                        guard let book = selectedBook else {
+                            deletingChapter = nil
+                            return
+                        }
+
+                        // Remove from book's chapters array
+                        book.chapters.removeAll { $0.id == chapter.id }
+
+                        // Delete the chapter from model context
+                        modelContext.delete(chapter)
+
+                        // Update book's last modified timestamp
+                        book.lastModified = Date()
+
+                        // Clear the deleting reference
+                        deletingChapter = nil
+
+                        // Clear selection if this was the selected chapter
+                        if selectedChapterId == chapter.id {
+                            selectedChapterId = nil
+                        }
+
+                        // Update cached chapters array asynchronously
+                        isLoadingChapters = true
+                        try? await Task.sleep(for: .milliseconds(50))
+                        guard !Task.isCancelled else {
+                            isLoadingChapters = false
+                            return
+                        }
+                        chaptersToShow = book.chapters.sorted { $0.order < $1.order }
+                        isLoadingChapters = false
+                    }
+                }
+            }
+        } message: {
+            if let chapter = deletingChapter {
+                Text("Are you sure you want to delete \"\(chapter.extractedTitle)\"? This action cannot be undone.")
+            }
+        }
+        )
     }
 
     var body: some View {

@@ -11,6 +11,14 @@ import SwiftUI
 #if canImport(UIKit)
 import UIKit
 
+fileprivate typealias PlatformColor = UIColor
+
+fileprivate extension UIColor {
+    static var labelColor: UIColor { .label }
+    static var secondaryLabelColor: UIColor { .secondaryLabel }
+    static var tertiaryLabelColor: UIColor { .tertiaryLabel }
+}
+
 /// Rich text editor supporting NSAttributedString formatting
 ///
 /// Wraps UITextView to provide rich text editing capabilities that SwiftUI's
@@ -183,7 +191,7 @@ struct RichTextEditor: UIViewRepresentable {
         private func defaultTypingAttributes() -> [NSAttributedString.Key: Any] {
             [
                 .font: UIFont.systemFont(ofSize: 17),
-                .foregroundColor: UIColor.label
+                .foregroundColor: PlatformColor.labelColor
             ]
         }
 
@@ -224,7 +232,7 @@ struct RichTextEditor: UIViewRepresentable {
 
         /// Update UITextView's typingAttributes to match attributes at cursor position
         /// This ensures that newly typed characters inherit the current formatting
-        private func updateTypingAttributes(_ textView: UITextView) {
+        fileprivate func updateTypingAttributes(_ textView: UITextView) {
             guard textView.attributedText.length > 0 else {
                 // Empty text - use defaults
                 textView.typingAttributes = defaultTypingAttributes()
@@ -401,7 +409,7 @@ extension RichTextEditor {
 
         case .textColor:
             // Reset to default label color
-            attributedText.addAttribute(.foregroundColor, value: UIColor.label, range: range)
+            attributedText.addAttribute(.foregroundColor, value: PlatformColor.labelColor, range: range)
 
         default:
             break
@@ -579,12 +587,14 @@ extension UIFont {
         @State private var attributedText = NSAttributedString(string: "Sample chapter content")
         @State private var selectedRange = NSRange(location: 0, length: 0)
         @FocusState private var isFocused: Bool
+        @State private var getCurrentContent: (() -> NSAttributedString)? = nil
 
         var body: some View {
             RichTextEditor(
                 attributedText: $attributedText,
                 selectedRange: $selectedRange,
-                isFocused: $isFocused
+                isFocused: $isFocused,
+                getCurrentContent: $getCurrentContent
             )
         }
     }
@@ -593,6 +603,10 @@ extension UIFont {
 }
 
 #elseif canImport(AppKit)
+import AppKit
+
+fileprivate typealias PlatformColor = NSColor
+// macOS already has labelColor, secondaryLabelColor, tertiaryLabelColor
 
 /// macOS RichTextEditor stub using NSTextView
 ///
@@ -654,7 +668,7 @@ struct RichTextEditor: NSViewRepresentable {
                     let defaultFont = NSFont.systemFont(ofSize: 17)
                     let attributes: [NSAttributedString.Key: Any] = [
                         .font: defaultFont,
-                        .foregroundColor: NSColor.labelColor
+                        .foregroundColor: PlatformColor.labelColor
                     ]
                     textStorage.setAttributedString(NSAttributedString(string: "", attributes: attributes))
                 }
@@ -722,16 +736,23 @@ struct RichTextEditor: NSViewRepresentable {
 
                     // CRITICAL: Check for zero-width space BEFORE restoring old selection
                     // This ensures empty chapters always get cursor at position 0
+                    // LAYOUT FIX: Defer setSelectedRange to next run loop to prevent layout recursion
+                    // setSelectedRange can trigger internal scroll operations during layout
                     if textStorage.string == "\u{200B}" {
                         // SPECIAL CASE: Zero-width space only (empty chapter)
                         // Position cursor at START (position 0, before the zero-width space)
                         // This prevents backspace from deleting it on first keypress
-                        textView.setSelectedRange(NSRange(location: 0, length: 0))
-                        print("📍 Positioned cursor at start of empty chapter (before zero-width space)")
+                        DispatchQueue.main.async {
+                            textView.setSelectedRange(NSRange(location: 0, length: 0))
+                            print("📍 Positioned cursor at start of empty chapter (before zero-width space)")
+                        }
                     } else if oldSelectedRange.location != NSNotFound &&
                               oldSelectedRange.location <= textStorage.length {
                         // Restore selection for normal content
-                        textView.setSelectedRange(oldSelectedRange)
+                        // Defer to prevent layout recursion
+                        DispatchQueue.main.async {
+                            textView.setSelectedRange(oldSelectedRange)
+                        }
                     }
 
                     // REMOVED: textView.scrollToVisible(visibleRect)
@@ -784,6 +805,7 @@ struct RichTextEditor: NSViewRepresentable {
         /// Debounce task for text change updates
         var textChangeDebounceTask: Task<Void, Never>?
 
+        @MainActor
         init(_ parent: RichTextEditor) {
             self.parent = parent
             // CRITICAL: Store the Binding itself, not just the value
@@ -906,7 +928,7 @@ struct RichTextEditor: NSViewRepresentable {
                 typingAttributes[.foregroundColor] = foregroundColor
             } else {
                 // Always have a foreground color
-                typingAttributes[.foregroundColor] = NSColor.labelColor
+                typingAttributes[.foregroundColor] = PlatformColor.labelColor
             }
 
             // Preserve highlight (background color)
@@ -940,7 +962,7 @@ struct RichTextEditor: NSViewRepresentable {
         private func defaultTypingAttributes() -> [NSAttributedString.Key: Any] {
             [
                 .font: NSFont.systemFont(ofSize: 17),
-                .foregroundColor: NSColor.labelColor
+                .foregroundColor: PlatformColor.labelColor
             ]
         }
 
@@ -1233,7 +1255,7 @@ struct RichTextEditor: NSViewRepresentable {
 
         case .textColor:
             // Reset to default label color
-            attributedText.addAttribute(.foregroundColor, value: NSColor.labelColor, range: range)
+            attributedText.addAttribute(.foregroundColor, value: PlatformColor.labelColor, range: range)
 
         default:
             break

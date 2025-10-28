@@ -186,7 +186,7 @@ struct FormatPopoverView: View {
             .buttonStyle(.plain)
         }
         .frame(width: 280)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(.background)
     }
 
     // MARK: - Helper Properties
@@ -303,7 +303,7 @@ struct ColorPickerPopover: View {
             .padding(.bottom, 12)
         }
         .frame(width: 200)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(.background)
     }
 }
 

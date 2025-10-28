@@ -10,6 +10,12 @@ import Foundation
 import UIKit
 fileprivate typealias PlatformFont = UIFont
 fileprivate typealias PlatformColor = UIColor
+
+fileprivate extension UIColor {
+    static var labelColor: UIColor { .label }
+    static var secondaryLabelColor: UIColor { .secondaryLabel }
+    static var tertiaryLabelColor: UIColor { .tertiaryLabel }
+}
 #elseif canImport(AppKit)
 import AppKit
 fileprivate typealias PlatformFont = NSFont

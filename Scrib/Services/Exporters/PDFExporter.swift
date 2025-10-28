@@ -10,14 +10,20 @@ import PDFKit
 
 #if canImport(UIKit)
 import UIKit
-// Use platform-specific types and extensions from CrossPlatform.swift
 fileprivate typealias PlatformFont = UIFont
 fileprivate typealias PlatformColor = UIColor
+
+// iOS: Add .labelColor extension to match macOS API
+fileprivate extension UIColor {
+    static var labelColor: UIColor { .label }
+    static var secondaryLabelColor: UIColor { .secondaryLabel }
+    static var tertiaryLabelColor: UIColor { .tertiaryLabel }
+}
 #elseif canImport(AppKit)
 import AppKit
-// Use platform-specific types and extensions from CrossPlatform.swift
 fileprivate typealias PlatformFont = NSFont
 fileprivate typealias PlatformColor = NSColor
+// macOS already has labelColor, secondaryLabelColor, tertiaryLabelColor
 #endif
 
 /// PDF export implementation using UIGraphicsPDFRenderer
