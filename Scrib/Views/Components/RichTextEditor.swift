@@ -462,6 +462,48 @@ extension RichTextEditor {
         attributedText.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
     }
 
+    /// Apply text alignment to the specified paragraph range
+    /// - Parameters:
+    ///   - alignment: The text alignment to apply (.left, .center, .right, .justified)
+    ///   - attributedText: The mutable attributed string to modify
+    ///   - range: The range to apply alignment (should be paragraph range)
+    static func applyTextAlignment(_ alignment: NSTextAlignment, to attributedText: NSMutableAttributedString, range: NSRange) {
+        guard range.location != NSNotFound && range.length > 0 else { return }
+
+        // Get existing paragraph style or create new one
+        let existingStyle = attributedText.attribute(.paragraphStyle, at: range.location, effectiveRange: nil) as? NSParagraphStyle
+        let paragraphStyle = (existingStyle?.mutableCopy() as? NSMutableParagraphStyle) ?? NSMutableParagraphStyle()
+
+        // Set the alignment
+        paragraphStyle.alignment = alignment
+
+        // Apply the updated paragraph style
+        attributedText.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+    }
+
+    /// Get the current text alignment at the specified range
+    /// - Parameters:
+    ///   - attributedText: The attributed string to query
+    ///   - range: The range to check alignment (typically cursor position or selection start)
+    /// - Returns: The current text alignment, or .left (natural) if none specified
+    static func getCurrentAlignment(in attributedText: NSAttributedString, at range: NSRange) -> NSTextAlignment {
+        guard attributedText.length > 0 else { return .left }
+
+        // Determine position to check alignment
+        let checkLocation = range.length > 0 ? range.location : max(0, range.location)
+
+        // Ensure valid location
+        guard checkLocation >= 0 && checkLocation < attributedText.length else { return .left }
+
+        // Get paragraph style at location
+        if let paragraphStyle = attributedText.attribute(.paragraphStyle, at: checkLocation, effectiveRange: nil) as? NSParagraphStyle {
+            return paragraphStyle.alignment
+        }
+
+        // Default to left alignment
+        return .left
+    }
+
     /// Detect which text formats are currently active at the given selection
     /// Returns a set of active formats (bold, italic, underline, etc.)
     static func detectActiveFormats(in attributedText: NSAttributedString, at range: NSRange) -> Set<TextFormat> {
@@ -548,6 +590,21 @@ extension RichTextEditor {
             else if paragraphText.hasPrefix("☐ ") || paragraphText.hasPrefix("☑ ") {
                 activeFormats.insert(.checklist)
             }
+        }
+
+        // Check for text alignment
+        let currentAlignment = getCurrentAlignment(in: attributedText, at: range)
+        switch currentAlignment {
+        case .left, .natural:
+            activeFormats.insert(.alignLeft)
+        case .center:
+            activeFormats.insert(.alignCenter)
+        case .right:
+            activeFormats.insert(.alignRight)
+        case .justified:
+            activeFormats.insert(.alignJustified)
+        @unknown default:
+            activeFormats.insert(.alignLeft)
         }
 
         return activeFormats
@@ -851,6 +908,18 @@ struct RichTextEditor: NSViewRepresentable {
 
             parent.selectedRange = textView.selectedRange()
             parent.selectionDidChange?(textView.selectedRange())
+
+            // Report current text attributes at selection for format button states
+            // This ensures format toolbar reflects the actual formatting at cursor position
+            // Matches iOS behavior and standard word processor expectations (Google Docs, Word, etc.)
+            if let callback = parent.onAttributesChanged,
+               let textStorage = textView.textStorage {
+                let activeFormats = RichTextEditor.detectActiveFormats(
+                    in: textStorage,
+                    at: textView.selectedRange()
+                )
+                callback(activeFormats)
+            }
         }
 
         /// Update NSTextView's typingAttributes to match attributes at cursor position
@@ -1196,6 +1265,21 @@ struct RichTextEditor: NSViewRepresentable {
             }
         }
 
+        // Check for text alignment
+        let currentAlignment = getCurrentAlignment(in: attributedText, at: range)
+        switch currentAlignment {
+        case .left, .natural:
+            activeFormats.insert(.alignLeft)
+        case .center:
+            activeFormats.insert(.alignCenter)
+        case .right:
+            activeFormats.insert(.alignRight)
+        case .justified:
+            activeFormats.insert(.alignJustified)
+        @unknown default:
+            activeFormats.insert(.alignLeft)
+        }
+
         return activeFormats
     }
 
@@ -1308,6 +1392,48 @@ struct RichTextEditor: NSViewRepresentable {
     static func applyOutdent(to attributedText: NSMutableAttributedString, range: NSRange, indentDecrement: CGFloat = 20) {
         // Stub implementation for macOS
         // TODO: Implement proper outdentation using NSParagraphStyle
+    }
+
+    /// Apply text alignment to the specified paragraph range
+    /// - Parameters:
+    ///   - alignment: The text alignment to apply (.left, .center, .right, .justified)
+    ///   - attributedText: The mutable attributed string to modify
+    ///   - range: The range to apply alignment (should be paragraph range)
+    static func applyTextAlignment(_ alignment: NSTextAlignment, to attributedText: NSMutableAttributedString, range: NSRange) {
+        guard range.location != NSNotFound && range.length > 0 else { return }
+
+        // Get existing paragraph style or create new one
+        let existingStyle = attributedText.attribute(.paragraphStyle, at: range.location, effectiveRange: nil) as? NSParagraphStyle
+        let paragraphStyle = (existingStyle?.mutableCopy() as? NSMutableParagraphStyle) ?? NSMutableParagraphStyle()
+
+        // Set the alignment
+        paragraphStyle.alignment = alignment
+
+        // Apply the updated paragraph style
+        attributedText.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+    }
+
+    /// Get the current text alignment at the specified range
+    /// - Parameters:
+    ///   - attributedText: The attributed string to query
+    ///   - range: The range to check alignment (typically cursor position or selection start)
+    /// - Returns: The current text alignment, or .left (natural) if none specified
+    static func getCurrentAlignment(in attributedText: NSAttributedString, at range: NSRange) -> NSTextAlignment {
+        guard attributedText.length > 0 else { return .left }
+
+        // Determine position to check alignment
+        let checkLocation = range.length > 0 ? range.location : max(0, range.location)
+
+        // Ensure valid location
+        guard checkLocation >= 0 && checkLocation < attributedText.length else { return .left }
+
+        // Get paragraph style at location
+        if let paragraphStyle = attributedText.attribute(.paragraphStyle, at: checkLocation, effectiveRange: nil) as? NSParagraphStyle {
+            return paragraphStyle.alignment
+        }
+
+        // Default to left alignment
+        return .left
     }
 }
 

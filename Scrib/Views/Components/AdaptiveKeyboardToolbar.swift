@@ -23,6 +23,9 @@ struct AdaptiveKeyboardToolbar: View {
     /// Word count to display
     let wordCount: Int
 
+    /// Currently active formats at cursor/selection
+    let activeFormats: Set<TextFormat>
+
     /// Callback for formatting actions
     var onFormatAction: (FormatAction) -> Void
 
@@ -30,6 +33,9 @@ struct AdaptiveKeyboardToolbar: View {
     enum FormatAction {
         // Format menu
         case showFormatMenu
+
+        // Text alignment
+        case cycleAlignment
 
         // Text formatting
         case bold, italic, underline, strikethrough
@@ -123,11 +129,25 @@ struct AdaptiveKeyboardToolbar: View {
     private var coreTools: [ToolDescriptor] {
         [
             ToolDescriptor(icon: "textformat", label: "Format", action: .showFormatMenu, tint: .primary),
+            ToolDescriptor(icon: currentAlignmentIcon, label: "Text Alignment", action: .cycleAlignment, tint: .primary),
             ToolDescriptor(icon: "text.quote", label: "Quote", action: .quote),
             ToolDescriptor(icon: "link", label: "Insert Link", action: .link),
             ToolDescriptor(icon: "photo", label: "Insert Image", action: .image),
             ToolDescriptor(icon: "tablecells", label: "Insert Table", action: .table),
         ]
+    }
+
+    /// Get the icon for the current text alignment
+    private var currentAlignmentIcon: String {
+        if activeFormats.contains(.alignCenter) {
+            return "text.aligncenter"
+        } else if activeFormats.contains(.alignRight) {
+            return "text.alignright"
+        } else if activeFormats.contains(.alignJustified) {
+            return "text.justify"
+        } else {
+            return "text.alignleft"
+        }
     }
 
     /// Extended tools (swipeable, standard features)
@@ -215,6 +235,7 @@ struct ToolDescriptor: Hashable {
             selectedRange: .constant(nil),
             content: .constant("Sample chapter content"),
             wordCount: 1247,
+            activeFormats: [.alignLeft],
             onFormatAction: { action in
                 print("Format action: \(action)")
             }
@@ -235,6 +256,7 @@ struct ToolDescriptor: Hashable {
             selectedRange: .constant(nil),
             content: .constant(""),
             wordCount: 523,
+            activeFormats: [.alignCenter],
             onFormatAction: { _ in }
         )
     }

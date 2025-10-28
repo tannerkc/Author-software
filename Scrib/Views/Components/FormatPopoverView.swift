@@ -105,6 +105,47 @@ struct FormatPopoverView: View {
 
             Divider()
 
+            #if os(macOS)
+            // MARK: - Text Alignment Section (macOS only)
+            HStack(spacing: 12) {
+                // Left Align
+                FormatToggleButton(
+                    icon: "text.alignleft",
+                    isActive: activeFormats.contains(.alignLeft)
+                ) {
+                    onFormatAction(.alignLeft)
+                }
+
+                // Center Align
+                FormatToggleButton(
+                    icon: "text.aligncenter",
+                    isActive: activeFormats.contains(.alignCenter)
+                ) {
+                    onFormatAction(.alignCenter)
+                }
+
+                // Right Align
+                FormatToggleButton(
+                    icon: "text.alignright",
+                    isActive: activeFormats.contains(.alignRight)
+                ) {
+                    onFormatAction(.alignRight)
+                }
+
+                // Justified
+                FormatToggleButton(
+                    icon: "text.justify",
+                    isActive: activeFormats.contains(.alignJustified)
+                ) {
+                    onFormatAction(.alignJustified)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+
+            Divider()
+            #endif
+
             // MARK: - Text Styles Section
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(TextStyle.allCases) { style in

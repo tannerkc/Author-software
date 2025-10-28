@@ -158,6 +158,7 @@ struct ChapterEditorView: View {
                 selectedRange: .constant(nil),
                 content: .constant(attributedText.string),
                 wordCount: chapter.wordCount,
+                activeFormats: activeFormats,
                 onFormatAction: handleFormatAction
             )
             #endif
@@ -476,6 +477,31 @@ struct ChapterEditorView: View {
             }
         }
         #endif
+        #if os(macOS)
+        // MARK: - Keyboard Shortcuts for Alignment (macOS only)
+        .background(
+            // Invisible buttons with keyboard shortcuts
+            VStack {
+                Button("Left Align") {
+                    handleTextFormat(.alignLeft)
+                }
+                .keyboardShortcut("{", modifiers: .command)
+                .hidden()
+
+                Button("Center Align") {
+                    handleTextFormat(.alignCenter)
+                }
+                .keyboardShortcut("|", modifiers: .command)
+                .hidden()
+
+                Button("Right Align") {
+                    handleTextFormat(.alignRight)
+                }
+                .keyboardShortcut("}", modifiers: .command)
+                .hidden()
+            }
+        )
+        #endif
     }
 
     // MARK: - Format Actions
@@ -593,6 +619,19 @@ struct ChapterEditorView: View {
         case .table:
             // Show table insertion sheet
             showingTableInsertion = true
+        case .cycleAlignment:
+            // Cycle through alignments: left → center → right → justified → left
+            let nextAlignment: TextFormat
+            if activeFormats.contains(.alignLeft) {
+                nextAlignment = .alignCenter
+            } else if activeFormats.contains(.alignCenter) {
+                nextAlignment = .alignRight
+            } else if activeFormats.contains(.alignRight) {
+                nextAlignment = .alignJustified
+            } else {
+                nextAlignment = .alignLeft
+            }
+            handleTextFormat(nextAlignment)
         default:
             print("Format action not yet implemented: \(action)")
         }
@@ -745,6 +784,26 @@ struct ChapterEditorView: View {
             // Remove indentation from current paragraph or selected paragraphs
             let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
             RichTextEditor.applyOutdent(to: mutableText, range: paragraphRange)
+
+        case .alignLeft:
+            // Apply left alignment to current paragraph or selected paragraphs
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
+            RichTextEditor.applyTextAlignment(.left, to: mutableText, range: paragraphRange)
+
+        case .alignCenter:
+            // Apply center alignment to current paragraph or selected paragraphs
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
+            RichTextEditor.applyTextAlignment(.center, to: mutableText, range: paragraphRange)
+
+        case .alignRight:
+            // Apply right alignment to current paragraph or selected paragraphs
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
+            RichTextEditor.applyTextAlignment(.right, to: mutableText, range: paragraphRange)
+
+        case .alignJustified:
+            // Apply justified alignment to current paragraph or selected paragraphs
+            let paragraphRange = RichTextEditor.paragraphRange(for: textSelection, in: currentText)
+            RichTextEditor.applyTextAlignment(.justified, to: mutableText, range: paragraphRange)
         }
 
         // Update the attributed text

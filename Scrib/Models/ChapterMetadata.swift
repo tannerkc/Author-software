@@ -279,6 +279,7 @@ enum TextFormat: Hashable, Equatable {
     case textColor(Color)
     case bulletList, numberedList, checklist
     case indent, outdent
+    case alignLeft, alignCenter, alignRight, alignJustified
 
     // Equatable implementation for Color comparison
     static func == (lhs: TextFormat, rhs: TextFormat) -> Bool {
@@ -294,6 +295,8 @@ enum TextFormat: Hashable, Equatable {
         case (.bulletList, .bulletList), (.numberedList, .numberedList), (.checklist, .checklist):
             return true
         case (.indent, .indent), (.outdent, .outdent):
+            return true
+        case (.alignLeft, .alignLeft), (.alignCenter, .alignCenter), (.alignRight, .alignRight), (.alignJustified, .alignJustified):
             return true
         default:
             return false
@@ -330,6 +333,14 @@ enum TextFormat: Hashable, Equatable {
             hasher.combine("indent")
         case .outdent:
             hasher.combine("outdent")
+        case .alignLeft:
+            hasher.combine("alignLeft")
+        case .alignCenter:
+            hasher.combine("alignCenter")
+        case .alignRight:
+            hasher.combine("alignRight")
+        case .alignJustified:
+            hasher.combine("alignJustified")
         }
     }
 
